@@ -4,11 +4,11 @@ import * as argon2 from 'argon2';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { UserService } from 'src/modules/users/services/user/user.service';
 import { Tokens } from '../types';
 import { AuthLoginInput } from '../inputs/auth-login.input';
 import { UserEntity } from 'src/entities';
 import { AuthRegisterInput } from '../inputs';
+import { UserService } from 'src/modules/users/services/user/user.service';
 
 
 @Injectable()

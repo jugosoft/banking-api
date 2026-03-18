@@ -1,14 +1,16 @@
-import { 
-    Column, 
-    CreateDateColumn, 
-    Entity, 
-    JoinTable, 
-    ManyToMany, 
-    PrimaryGeneratedColumn, 
-    UpdateDateColumn 
+import {
+    Column,
+    CreateDateColumn,
+    Entity,
+    JoinTable,
+    ManyToMany,
+    OneToMany,
+    PrimaryGeneratedColumn,
+    UpdateDateColumn
 } from 'typeorm';
 
 import { RoleEntity } from './role.entity';
+import { Deposit } from './deposit.entity';
 
 
 @Entity('users')
@@ -32,9 +34,12 @@ export class UserEntity {
     @Column({ unique: true })
     name: string;
 
-    @Column({select: false})
+    @Column({ select: false })
     password: string;
 
     @Column({ nullable: true })
     hashedRT: string;
+
+    @OneToMany(() => Deposit, deposit => deposit.user)
+    deposits: Deposit[];
 }

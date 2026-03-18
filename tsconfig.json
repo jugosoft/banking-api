@@ -11,6 +11,20 @@
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
+    "paths": {
+      "@entities": [
+        "src/entities"
+      ],
+      "@modules": [
+        "src/modules"
+      ],
+      "@constants": [
+        "src/constants"
+      ],
+      "@guards": [
+        "src/guards"
+      ]
+    },
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": false,

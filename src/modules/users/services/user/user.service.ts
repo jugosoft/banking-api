@@ -6,6 +6,7 @@ import { UserEntity } from 'src/entities/user.entity';
 import { CreateUserInput } from '../../inputs/create-user.input';
 import { UpdateUserInput } from '../../inputs/update-user.input';
 import { UpdateUserRtInput } from '../../inputs/update-user-rt.input';
+import { ErrorCode } from '@constants';
 
 @Injectable()
 export class UserService {
@@ -18,8 +19,12 @@ export class UserService {
         return await this.userRepository.save({ ...createUserInput });
     }
 
-    async getOneUser(id: number): Promise<UserEntity> | null {
-        return await this.userRepository.findOne({ where: { id: id } });
+    async getOneUser(id: number): Promise<UserEntity> {
+        const user = await this.userRepository.findOne({ where: { id: id } });
+        if (!user) {
+            throw new Error(ErrorCode.NO_USER);
+        }
+        return user;
     }
 
     async getOneUserByEmail(email: string): Promise<UserEntity> | null {
@@ -50,7 +55,7 @@ export class UserService {
     async updateUserRt(updateUserRtInput: UpdateUserRtInput): Promise<UserEntity> {
         const result = await this.userRepository.update({ id: updateUserRtInput.id }, { ...updateUserRtInput });
         console.log(result);
-        
+
         return await this.getOneUser(updateUserRtInput.id);
     }
 }

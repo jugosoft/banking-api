@@ -1,11 +1,11 @@
 import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 
 import { GetCurrentUserId, GetCurrentUser } from 'src/common';
-import { AtGuard, RtGuard } from '../guards';
 import { AuthLoginInput } from '../inputs/auth-login.input';
 import { AuthRegisterInput } from '../inputs/auth-register.input';
 import { AuthService } from '../services/auth.service';
 import { Tokens } from '../types';
+import { AtGuard, RtGuard } from '@guards';
 
 @Controller('auth')
 export class AuthController {
