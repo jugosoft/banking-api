@@ -1,16 +1,21 @@
-import { Field, ID, InputType } from "@nestjs/graphql";
+import { IsEmail, IsNotEmpty, IsNumber, IsString, Length, Matches } from 'class-validator';
 
-@InputType()
 export class UpdateUserInput {
-  @Field(() => ID)
+  @IsNotEmpty()
+  @IsNumber()
   id: number;
 
-  @Field({ nullable: true })
+  @IsNotEmpty()
+  @IsEmail()
   email: string;
 
-  @Field({ nullable: true })
+  @IsNotEmpty()
+  @IsString()
+  @Length(3, 20)
+  @Matches(/^[a-zA-Z]+$/, { message: 'Name must contain only English letters' })
   name: string;
 
-  @Field({ nullable: true })
+  @IsNotEmpty()
+  @IsString()
   hashedRT: string;
 }
