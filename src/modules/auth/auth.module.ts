@@ -8,6 +8,7 @@ import { AuthController } from './controllers/auth.controller';
 import { AuthService } from './services/auth.service';
 import { AtStrategy, RtStrategy } from './strategies';
 import { UsersModule } from '../users/users.module';
+import { UserService } from '@common/services';
 
 
 @Module({
@@ -19,6 +20,7 @@ import { UsersModule } from '../users/users.module';
     ],
     providers: [
         AuthService,
+        UserService,
         AtStrategy,
         RtStrategy
     ],

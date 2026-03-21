@@ -1,133 +1,113 @@
-import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import * as argon2 from 'argon2';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-
-import { Tokens } from '../types';
-import { AuthLoginInput } from '../inputs/auth-login.input';
-import { UserEntity } from 'src/entities';
-import { AuthRegisterInput } from '../inputs';
-import { UserService } from 'src/modules/users/services/user/user.service';
-
+import * as bcrypt from 'bcrypt';
+import { UserInfo } from '../../../common/types/user/user-info.type';
+import { ILoginResponse } from '../types/login-response.type';
+import { UserService } from '@common/services';
 
 @Injectable()
 export class AuthService {
     constructor(
-        @InjectRepository(UserEntity)
-        private readonly userRepository: Repository<UserEntity>,
         private readonly usersService: UserService,
-        private readonly jwtService: JwtService
+        private readonly jwtService: JwtService,
+        private readonly configService: ConfigService
     ) { }
 
-    async loginLocal(authLoginInput: AuthLoginInput): Promise<Tokens> {
-        const user = await this.userRepository.findOne({
-            where: {
-                name: authLoginInput.name
-            },
-            select: [
-                'id',
-                'name',
-                'password'
-            ]
-        });
-
+    public async loginLocal(dto: { email: string, password: string }): Promise<UserInfo> {
+        const user = await this.usersService.findUserByEmail(dto.email);
         if (!user) {
-            throw new BadRequestException('Access Denied. Try again!');
+            return null;
         }
 
-        const passwordMatch = await argon2.verify(user.password, authLoginInput.password);
-
-        if (!passwordMatch) {
-            throw new BadRequestException('Access Denied. Try again!');
+        const isPasswordValid = await bcrypt.compare(dto.password, user.password);
+        if (!isPasswordValid) {
+            return null;
         }
 
-        const tokens = await this.getTokens(user.id, user.name);
+        const userInfo: UserInfo = {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            roles: user.roles.map(role => ({ id: role.id, name: role.name })),
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt
+        };
 
-        await this.updateRtHash(user.id, tokens.refreshToken);
-
-        return tokens;
+        return userInfo;
     }
 
-    async registerLocal(authRegisterInput: AuthRegisterInput): Promise<Tokens> {
-        const userByEmail = await this.usersService.getOneUserByEmail(authRegisterInput.email);
-        const userByName = await this.usersService.getOneUserByName(authRegisterInput.name);
+    public async registerLocal(dto: { name: string, email: string, password: string }): Promise<UserInfo> {
+        try {
+            const user = await this.usersService.createUser(dto);
+            const userInfo: UserInfo = {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                roles: [],
+                createdAt: user.createdAt,
+                updatedAt: user.updatedAt
+            };
 
-        if (userByEmail || userByName) {
-            throw new BadRequestException('User already exists');
+            return { ...userInfo };
+        } catch (error) {
+            // return { success: false, errors: { registration: [{ code: 'FAILED', message: error.message }] } };
         }
-
-        // Hash password
-        const hash = await this.hashData(authRegisterInput.password);
-        const newUser = await this.usersService.createUser({
-            ...authRegisterInput,
-            password: hash
-        });
-
-        const tokens = await this.getTokens(newUser.id, newUser.name);
-
-        await this.updateRtHash(newUser.id, tokens.refreshToken);
-
-        return tokens;
     }
 
-    async logout(userId: number): Promise<boolean> {
-        await this.usersService.updateUserRt({ id: userId, hashedRT: null });
-        return true;
+    // public async logout(userId: number) {
+    //     return this.usersService.removeRt(userId);
+    // }
+
+    // public async refreshTokens(userId: number, rt: string) {
+    //     const user = await this.usersService.getUserById(userId);
+    //     if (!user || !user.hashedRT)
+    //         throw new ForbiddenException('Access Denied');
+    //     const rtMatches = await bcrypt.compare(rt, user.hashedRT);
+    //     if (!rtMatches) throw new ForbiddenException('Access Denied');
+    //     const tokens = await this.getTokens(user.id, user.email, user);
+    //     await this.updateRtHash(user.id, tokens.refreshToken);
+    //     return tokens;
+    // }
+
+    public async updateRtHash(userId: number, rt: string) {
+        const hashedRT = await this.hashData(rt);
+        await this.usersService.updateRt(userId, hashedRT);
     }
 
-    async updateRtHash(userId: number, refreshToken: string): Promise<void> {
-        const hashedRefreshToken = await this.hashData(refreshToken);
-        await this.usersService.updateUserRt({ id: userId, hashedRT: hashedRefreshToken });
-    }
-
-    async refreshTokens(userId: number, refreshToken: string): Promise<Tokens> {
-        const user = await this.usersService.getOneUser(userId);
-        if (!user || !user.hashedRT) {
-            throw new ForbiddenException('Access Denied');
-        }
-
-        const refreshTokenMatches = await argon2.verify(user.hashedRT, refreshToken);
-        if (!refreshTokenMatches) {
-            throw new ForbiddenException('Access Denied');
-        }
-
-        const tokens = await this.getTokens(userId, user.name);
-        await this.updateRtHash(userId, tokens.refreshToken);
-        return tokens;
-    }
-
-    async getTokens(userId: number, username: string): Promise<Tokens> {
-        const [accessToken, refreshToken] = await Promise.all([
+    public async getTokens(userId: number, email: string, user: UserInfo) {
+        const [at, rt] = await Promise.all([
             this.jwtService.signAsync(
                 {
                     sub: userId,
-                    username
+                    email,
+                    user
                 },
                 {
-                    secret: process.env.AT_SECRET,
-                    expiresIn: '60m'
-                }
+                    secret: this.configService.get('AT_SECRET'),
+                    expiresIn: 60 * 15,
+                },
             ),
             this.jwtService.signAsync(
                 {
                     sub: userId,
-                    username
+                    email,
+                    user
                 },
                 {
-                    secret: process.env.RT_SECRET,
-                    expiresIn: '7d'
-                }
-            )
+                    secret: this.configService.get('RT_SECRET'),
+                    expiresIn: 60 * 60 * 24 * 7,
+                },
+            ),
         ]);
 
         return {
-            accessToken,
-            refreshToken
+            accessToken: at,
+            refreshToken: rt,
         };
     }
 
-    private hashData(data: string): Promise<string> {
-        return argon2.hash(data);
+    private async hashData(data: string) {
+        return bcrypt.hash(data, 10);
     }
 }

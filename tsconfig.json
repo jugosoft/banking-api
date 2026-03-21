@@ -40,6 +40,12 @@
             "@guards": [
                 "src/guards"
             ],
+            "@common/*": [
+                "src/common/*"
+            ],
+            "@common": [
+                "src/common"
+            ],
         }
     },
     "include": [
