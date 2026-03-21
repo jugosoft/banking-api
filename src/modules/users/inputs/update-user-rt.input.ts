@@ -1,5 +1,5 @@
 export class UpdateUserRtInput {
-    userId: number;
+    id: number;
 
     hashedRT: string;
 }

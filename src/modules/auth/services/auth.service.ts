@@ -63,6 +63,16 @@ export class AuthService {
     }
 
     public async registerLocal(dto: { name: string, email: string, password: string }): Promise<UserInfo> {
+        const existingUserByEmail = await this.userService.getOneUserByEmail(dto.email);
+        if (existingUserByEmail) {
+            throw new Error('Email already exists');
+        }
+
+        const existingUserByName = await this.userService.getOneUserByName(dto.name);
+        if (existingUserByName) {
+            throw new Error('Username already exists');
+        }
+
         try {
             const user = await this.userService.createUser(dto);
             const userInfo: UserInfo = {
@@ -74,9 +84,12 @@ export class AuthService {
                 updatedAt: user.updatedAt
             };
 
+            const tokens = await this.getTokens(user.id, user.email, userInfo);
+            await this.updateRtHash(user.id, tokens.refreshToken);
+
             return { ...userInfo };
         } catch (error) {
-            // return { success: false, errors: { registration: [{ code: 'FAILED', message: error.message }] } };
+            throw new Error('Registration failed');
         }
     }
 
@@ -95,13 +108,13 @@ export class AuthService {
     //     return tokens;
     // }
 
-    public async updateRtHash(userId: number, rt: string) {
+    public async updateRtHash(id: number, rt: string) {
         const hashedRT = await this.hashData(rt);
-        await this.userService.updateUserRt({ userId, hashedRT });
+        await this.userService.updateUserRt({ id, hashedRT });
     }
 
     public async getTokens(userId: number, email: string, user: UserInfo) {
-        const [at, rt] = await Promise.all([
+        const [accessToken, refreshToken] = await Promise.all([
             this.jwtService.signAsync(
                 {
                     sub: userId,
@@ -127,8 +140,8 @@ export class AuthService {
         ]);
 
         return {
-            accessToken: at,
-            refreshToken: rt,
+            accessToken,
+            refreshToken
         };
     }
 

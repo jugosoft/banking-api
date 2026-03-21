@@ -1,7 +1,7 @@
 import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards, UsePipes, ValidationPipe, Res, Get } from '@nestjs/common';
 import { Response } from 'express';
 
-import { GetCurrentUserId, GetCurrentUser, CustomValidationPipe, IApiResponse } from 'src/common';
+import { GetCurrentUserId, GetCurrentUser, CustomValidationPipe, IApiResponse, UserInfo } from 'src/common';
 import { AuthRegisterInput } from '../inputs/auth-register.input';
 import { AuthService } from '../services/auth.service';
 import { AtGuard, RtGuard } from '@guards';
@@ -39,7 +39,19 @@ export class AuthController {
         @Body() authRegisterInput: AuthRegisterInput,
         @Res({ passthrough: true }) response: Response
     ): Promise<IRegisterResponse> {
-        const user = await this.authService.registerLocal(authRegisterInput);
+        let user: UserInfo | null = null;
+        try {
+            user = await this.authService.registerLocal(authRegisterInput);
+        } catch (error) {
+            return {
+                success: false,
+                statusCode: HttpStatus.BAD_REQUEST,
+                errors: [{
+                    code: 'REGISTRATION_FAIL',
+                    message: error.message
+                }]
+            };
+        }
 
         const tokens = await this.authService.getTokens(user.id, user.email, user);
         await this.authService.updateRtHash(user.id, tokens.refreshToken);

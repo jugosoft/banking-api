@@ -53,8 +53,8 @@ export class UserService {
     }
 
     public async updateUserRt(updateUserRtInput: UpdateUserRtInput): Promise<UserEntity> {
-        const result = await this.userRepository.update({ id: updateUserRtInput.userId }, { ...updateUserRtInput });
-        return await this.getOneUser(updateUserRtInput.userId);
+        const result = await this.userRepository.update({ id: updateUserRtInput.id }, { ...updateUserRtInput });
+        return await this.getOneUser(updateUserRtInput.id);
     }
 
     public async removeRt(userId: number): Promise<void> {
