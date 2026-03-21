@@ -1,5 +1,5 @@
 import { UserInfo, IApiResponse } from '@common/types';
 import { Tokens } from './tokens.type';
 
-export interface ILoginResponse extends IApiResponse<UserInfo & Tokens> {
+export interface IRegisterResponse extends IApiResponse<UserInfo & Tokens> {
 }

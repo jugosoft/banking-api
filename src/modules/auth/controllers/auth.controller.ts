@@ -1,15 +1,20 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards, UsePipes, ValidationPipe, Res } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards, UsePipes, ValidationPipe, Res, Get } from '@nestjs/common';
 import { Response } from 'express';
 
-import { GetCurrentUserId, GetCurrentUser, CustomValidationPipe } from 'src/common';
+import { GetCurrentUserId, GetCurrentUser, CustomValidationPipe, IApiResponse } from 'src/common';
 import { AuthRegisterInput } from '../inputs/auth-register.input';
 import { AuthService } from '../services/auth.service';
 import { AtGuard, RtGuard } from '@guards';
-import { ILoginResponse } from '../types/login-response.type';
+import { IGetCurrentUserResponse } from '../types/get-current-user-response.type';
+import { IRegisterResponse } from '../types';
+import { UserService } from '@modules/users/services/user/user.service';
 
 @Controller('auth')
 export class AuthController {
-    constructor(private authService: AuthService) { }
+    constructor(
+        private readonly authService: AuthService,
+        private readonly userService: UserService,
+    ) { }
 
     // @Post('local/login')
     // @HttpCode(HttpStatus.OK)
@@ -33,7 +38,7 @@ export class AuthController {
     async registerLocal(
         @Body() authRegisterInput: AuthRegisterInput,
         @Res({ passthrough: true }) response: Response
-    ): Promise<ILoginResponse> {
+    ): Promise<IRegisterResponse> {
         const user = await this.authService.registerLocal(authRegisterInput);
 
         const tokens = await this.authService.getTokens(user.id, user.email, user);
@@ -56,13 +61,37 @@ export class AuthController {
     @UseGuards(AtGuard)
     @Post('logout')
     @HttpCode(HttpStatus.OK)
-    async logout(@GetCurrentUserId() userId: number, @Res({ passthrough: true }) response: Response): Promise<ILoginResponse> {
-        // await this.authService.logout(userId);
+    async logout(@GetCurrentUserId() userId: number, @Res({ passthrough: true }) response: Response): Promise<IApiResponse<string>> {
+        await this.authService.logout(userId);
         response.clearCookie('access_token');
         response.clearCookie('refresh_token');
         return {
             success: true,
-            statusCode: HttpStatus.OK
+            statusCode: HttpStatus.OK,
+            data: 'Ну и пошёл (а) на хер! (с увожением)'
+        };
+    }
+
+    @UseGuards(AtGuard)
+    @Get('currentUser')
+    @HttpCode(HttpStatus.OK)
+    public async getCurrentUser(@GetCurrentUserId() userId: number): Promise<IGetCurrentUserResponse> {
+        const user = await this.userService.getOneUser(userId);
+        if (!user) {
+            return {
+                statusCode: HttpStatus.UNAUTHORIZED,
+                success: false,
+                errors: [{
+                    code: 'UNAUTHORIZED',
+                    message: 'User not found'
+                }]
+            }
+        }
+
+        return {
+            success: true,
+            statusCode: HttpStatus.OK,
+            data: user
         };
     }
 

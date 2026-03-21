@@ -1,28 +1,42 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { ForbiddenException, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UserInfo } from '../../../common/types/user/user-info.type';
 import { ILoginResponse } from '../types/login-response.type';
-import { UserService } from '@common/services';
+import { UserService } from '@modules/users/services/user/user.service';
 
 @Injectable()
 export class AuthService {
     constructor(
-        private readonly usersService: UserService,
+        private readonly userService: UserService,
         private readonly jwtService: JwtService,
         private readonly configService: ConfigService
     ) { }
 
-    public async loginLocal(dto: { email: string, password: string }): Promise<UserInfo> {
-        const user = await this.usersService.findUserByEmail(dto.email);
+    public async loginLocal(dto: { email: string, password: string }): Promise<ILoginResponse> {
+        const user = await this.userService.getOneUserByEmail(dto.email);
         if (!user) {
-            return null;
+            return {
+                success: false,
+                statusCode: HttpStatus.UNAUTHORIZED,
+                errors: [{
+                    code: 'INVALID_CREDENTIALS',
+                    message: 'Invalid email or password'
+                }]
+            };
         }
 
         const isPasswordValid = await bcrypt.compare(dto.password, user.password);
         if (!isPasswordValid) {
-            return null;
+            return {
+                success: false,
+                statusCode: HttpStatus.UNAUTHORIZED,
+                errors: [{
+                    code: 'INVALID_CREDENTIALS',
+                    message: 'Invalid email or password'
+                }]
+            };
         }
 
         const userInfo: UserInfo = {
@@ -34,12 +48,23 @@ export class AuthService {
             updatedAt: user.updatedAt
         };
 
-        return userInfo;
+        const tokens = await this.getTokens(user.id, user.email, userInfo);
+        await this.updateRtHash(user.id, tokens.refreshToken);
+
+        return {
+            success: true,
+            statusCode: 200,
+            data: {
+                ...userInfo,
+                accessToken: tokens.accessToken,
+                refreshToken: tokens.refreshToken
+            }
+        };
     }
 
     public async registerLocal(dto: { name: string, email: string, password: string }): Promise<UserInfo> {
         try {
-            const user = await this.usersService.createUser(dto);
+            const user = await this.userService.createUser(dto);
             const userInfo: UserInfo = {
                 id: user.id,
                 email: user.email,
@@ -55,9 +80,9 @@ export class AuthService {
         }
     }
 
-    // public async logout(userId: number) {
-    //     return this.usersService.removeRt(userId);
-    // }
+    public async logout(userId: number) {
+        return this.userService.removeRt(userId);
+    }
 
     // public async refreshTokens(userId: number, rt: string) {
     //     const user = await this.usersService.getUserById(userId);
@@ -72,7 +97,7 @@ export class AuthService {
 
     public async updateRtHash(userId: number, rt: string) {
         const hashedRT = await this.hashData(rt);
-        await this.usersService.updateRt(userId, hashedRT);
+        await this.userService.updateUserRt({ userId, hashedRT });
     }
 
     public async getTokens(userId: number, email: string, user: UserInfo) {

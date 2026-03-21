@@ -8,7 +8,7 @@ import { AuthController } from './controllers/auth.controller';
 import { AuthService } from './services/auth.service';
 import { AtStrategy, RtStrategy } from './strategies';
 import { UsersModule } from '../users/users.module';
-import { UserService } from '@common/services';
+import { UserService } from '@modules/users/services/user/user.service';
 
 
 @Module({

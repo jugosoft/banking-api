@@ -15,11 +15,11 @@ export class UserService {
         private readonly userRepository: Repository<UserEntity>
     ) { }
 
-    async createUser(createUserInput: CreateUserInput): Promise<UserEntity> {
+    public async createUser(createUserInput: CreateUserInput): Promise<UserEntity> {
         return await this.userRepository.save({ ...createUserInput });
     }
 
-    async getOneUser(id: number): Promise<UserEntity> {
+    public async getOneUser(id: number): Promise<UserEntity> {
         const user = await this.userRepository.findOne({ where: { id: id } });
         if (!user) {
             throw new Error(ErrorCode.NO_USER);
@@ -27,19 +27,19 @@ export class UserService {
         return user;
     }
 
-    async getOneUserByEmail(email: string): Promise<UserEntity> | null {
+    public async getOneUserByEmail(email: string): Promise<UserEntity> | null {
         return await this.userRepository.findOne({ where: { email: email } });
     }
 
-    async getOneUserByName(name: string): Promise<UserEntity> | null {
+    public async getOneUserByName(name: string): Promise<UserEntity> | null {
         return await this.userRepository.findOne({ where: { name: name } });
     }
 
-    async getAllUsers(): Promise<UserEntity[]> {
+    public async getAllUsers(): Promise<UserEntity[]> {
         return await this.userRepository.find();
     }
 
-    async removeOneUser(id: number): Promise<number> | null {
+    public async removeOneUser(id: number): Promise<number> | null {
         const deleteResult = await this.userRepository.delete({ id });
         if (deleteResult.affected !== 0) {
             return id;
@@ -47,15 +47,17 @@ export class UserService {
         return null;
     }
 
-    async updateUser(updateUserInput: UpdateUserInput): Promise<UserEntity> {
+    public async updateUser(updateUserInput: UpdateUserInput): Promise<UserEntity> {
         await this.userRepository.update({ id: updateUserInput.id }, { ...updateUserInput });
         return await this.getOneUser(updateUserInput.id);
     }
 
-    async updateUserRt(updateUserRtInput: UpdateUserRtInput): Promise<UserEntity> {
-        const result = await this.userRepository.update({ id: updateUserRtInput.id }, { ...updateUserRtInput });
-        console.log(result);
+    public async updateUserRt(updateUserRtInput: UpdateUserRtInput): Promise<UserEntity> {
+        const result = await this.userRepository.update({ id: updateUserRtInput.userId }, { ...updateUserRtInput });
+        return await this.getOneUser(updateUserRtInput.userId);
+    }
 
-        return await this.getOneUser(updateUserRtInput.id);
+    public async removeRt(userId: number): Promise<void> {
+        await this.userRepository.update(userId, { hashedRT: null });
     }
 }
