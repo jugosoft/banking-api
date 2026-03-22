@@ -9,7 +9,7 @@ export class CreateUserInput {
   @IsString()
   @Length(3, 20)
   @Matches(/^[a-zA-Z]+$/, { message: 'Name must contain only English letters' })
-  name: string;
+  username: string;
 
   @IsNotEmpty()
   @Length(8)

@@ -1,9 +1,10 @@
-import { IsNotEmpty } from 'class-validator';
+import { IsNotEmpty, Length } from 'class-validator';
 
 export class AuthLoginInput {
     @IsNotEmpty()
-    name: string;
+    username: string;
 
     @IsNotEmpty()
+    @Length(8)
     password: string;
 }

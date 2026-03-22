@@ -28,11 +28,17 @@ export class UserService {
     }
 
     public async getOneUserByEmail(email: string): Promise<UserEntity> | null {
-        return await this.userRepository.findOne({ where: { email: email } });
+        return await this.userRepository.findOne({
+            where: { email },
+            select: ['id', 'email', 'username', 'password', 'hashedRT', 'createdAt', 'updatedAt']
+        });
     }
 
-    public async getOneUserByName(name: string): Promise<UserEntity> | null {
-        return await this.userRepository.findOne({ where: { name: name } });
+    public async getOneUserByUsername(username: string): Promise<UserEntity> | null {
+        return await this.userRepository.findOne({
+            where: { username },
+            select: ['id', 'email', 'username', 'password', 'hashedRT', 'createdAt', 'updatedAt']
+        });
     }
 
     public async getAllUsers(): Promise<UserEntity[]> {
@@ -57,7 +63,7 @@ export class UserService {
         return await this.getOneUser(updateUserRtInput.id);
     }
 
-    public async removeRt(userId: number): Promise<void> {
+    public async removeUserRt(userId: number): Promise<void> {
         await this.userRepository.update(userId, { hashedRT: null });
     }
 }

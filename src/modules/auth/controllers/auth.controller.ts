@@ -1,36 +1,48 @@
 import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards, UsePipes, ValidationPipe, Res, Get } from '@nestjs/common';
 import { Response } from 'express';
 
-import { GetCurrentUserId, GetCurrentUser, CustomValidationPipe, IApiResponse, UserInfo } from 'src/common';
+import { GetCurrentUserId, GetCurrentUser, CustomValidationPipe, IApiResponse, IUserInfo } from 'src/common';
 import { AuthRegisterInput } from '../inputs/auth-register.input';
 import { AuthService } from '../services/auth.service';
 import { AtGuard, RtGuard } from '@guards';
 import { IGetCurrentUserResponse } from '../types/get-current-user-response.type';
-import { IRegisterResponse } from '../types';
-import { UserService } from '@modules/users/services/user/user.service';
+import { ILoginResponse, IRegisterResponse, TokenPair } from '../types';
+
+import { AuthLoginInput } from '../inputs';
 
 @Controller('auth')
 export class AuthController {
     constructor(
-        private readonly authService: AuthService,
-        private readonly userService: UserService,
+        private readonly authService: AuthService
     ) { }
 
-    // @Post('local/login')
-    // @HttpCode(HttpStatus.OK)
-    // async loginLocal(@Body() authLoginInput: AuthLoginInput, @Res({ passthrough: true }) response: Response): Promise<ILoginResponse> {
-    //     const tokens = await this.authService.loginLocal(authLoginInput);
-    //     response.cookie('access_token', tokens.accessToken, { httpOnly: true });
-    //     response.cookie('refresh_token', tokens.refreshToken, { httpOnly: true });
-    //     return {
-    //         success: true,
-    //         data: {
-    //             user: tokens.user,
-    //             accessToken: tokens.accessToken,
-    //             refreshToken: tokens.refreshToken
-    //         }
-    //     };
-    // }
+    @Post('local/login')
+    @HttpCode(HttpStatus.OK)
+    async loginLocal(@Body() authLoginInput: AuthLoginInput, @Res({ passthrough: true }) response: Response): Promise<ILoginResponse> {
+        let userWithTokens: IUserInfo & TokenPair | null = null;
+        try {
+            userWithTokens = await this.authService.loginLocal(authLoginInput);
+        } catch (error) {
+            return {
+                success: false,
+                statusCode: HttpStatus.BAD_REQUEST,
+                errors: [{
+                    code: 'LOGIN_FAIL',
+                    message: 'Invalid credentials'
+                }]
+            };
+        }
+
+        this.setAuthCookies(response, userWithTokens);
+
+        return {
+            success: true,
+            statusCode: HttpStatus.OK,
+            data: {
+                ...userWithTokens
+            }
+        };
+    }
 
     @Post('local/register')
     @HttpCode(HttpStatus.CREATED)
@@ -39,7 +51,7 @@ export class AuthController {
         @Body() authRegisterInput: AuthRegisterInput,
         @Res({ passthrough: true }) response: Response
     ): Promise<IRegisterResponse> {
-        let user: UserInfo | null = null;
+        let user: IUserInfo | null = null;
         try {
             user = await this.authService.registerLocal(authRegisterInput);
         } catch (error) {
@@ -56,8 +68,7 @@ export class AuthController {
         const tokens = await this.authService.getTokens(user.id, user.email, user);
         await this.authService.updateRtHash(user.id, tokens.refreshToken);
 
-        response.cookie('access_token', tokens.accessToken, { httpOnly: true, secure: true, sameSite: 'strict' });
-        response.cookie('refresh_token', tokens.refreshToken, { httpOnly: true, secure: true, sameSite: 'strict' });
+        this.setAuthCookies(response, tokens);
 
         return {
             success: true,
@@ -75,8 +86,7 @@ export class AuthController {
     @HttpCode(HttpStatus.OK)
     async logout(@GetCurrentUserId() userId: number, @Res({ passthrough: true }) response: Response): Promise<IApiResponse<string>> {
         await this.authService.logout(userId);
-        response.clearCookie('access_token');
-        response.clearCookie('refresh_token');
+        this.clearAuthCookies(response);
         return {
             success: true,
             statusCode: HttpStatus.OK,
@@ -88,8 +98,10 @@ export class AuthController {
     @Get('currentUser')
     @HttpCode(HttpStatus.OK)
     public async getCurrentUser(@GetCurrentUserId() userId: number): Promise<IGetCurrentUserResponse> {
-        const user = await this.userService.getOneUser(userId);
-        if (!user) {
+        let user: IUserInfo | null = null;
+        try {
+            user = await this.authService.getCurrentUser(userId);
+        } catch (error) {
             return {
                 statusCode: HttpStatus.UNAUTHORIZED,
                 success: false,
@@ -97,7 +109,7 @@ export class AuthController {
                     code: 'UNAUTHORIZED',
                     message: 'User not found'
                 }]
-            }
+            };
         }
 
         return {
@@ -106,6 +118,18 @@ export class AuthController {
             data: user
         };
     }
+
+
+    private setAuthCookies<T extends TokenPair>(response: Response, tokens: T) {
+        response.cookie('access_token', tokens.accessToken, { httpOnly: true, secure: true, sameSite: 'strict' });
+        response.cookie('refresh_token', tokens.refreshToken, { httpOnly: true, secure: true, sameSite: 'strict' });
+    }
+
+    private clearAuthCookies(response: Response) {
+        response.clearCookie('access_token');
+        response.clearCookie('refresh_token');
+    }
+
 
     // @UseGuards(RtGuard)
     // @Post('refresh')

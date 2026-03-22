@@ -1,5 +1,6 @@
-import { UserInfo, IApiResponse } from '@common/types';
-import { Tokens } from './tokens.type';
+import { IApiResponse } from '@common/types';
+import { IUserInfo } from '@common/types/user';
+import { TokenPair } from './tokens.type';
 
-export interface IRegisterResponse extends IApiResponse<UserInfo & Tokens> {
+export interface IRegisterResponse extends IApiResponse<IUserInfo & TokenPair> {
 }

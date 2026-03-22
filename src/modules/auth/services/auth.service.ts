@@ -1,10 +1,11 @@
-import { ForbiddenException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { UserInfo } from '../../../common/types/user/user-info.type';
-import { ILoginResponse } from '../types/login-response.type';
+import { UserEntity } from '@entities';
 import { UserService } from '@modules/users/services/user/user.service';
+import { IUserInfo } from '@common/types/user';
+import { TokenPair } from '../types';
 
 @Injectable()
 export class AuthService {
@@ -14,71 +15,55 @@ export class AuthService {
         private readonly configService: ConfigService
     ) { }
 
-    public async loginLocal(dto: { email: string, password: string }): Promise<ILoginResponse> {
-        const user = await this.userService.getOneUserByEmail(dto.email);
+    public async loginLocal(dto: { username: string, password: string }): Promise<IUserInfo & TokenPair> {
+        const user = await this.userService.getOneUserByUsername(dto.username);
         if (!user) {
-            return {
-                success: false,
-                statusCode: HttpStatus.UNAUTHORIZED,
-                errors: [{
-                    code: 'INVALID_CREDENTIALS',
-                    message: 'Invalid email or password'
-                }]
-            };
+            throw new Error('Invalid username or password');
         }
 
         const isPasswordValid = await bcrypt.compare(dto.password, user.password);
         if (!isPasswordValid) {
-            return {
-                success: false,
-                statusCode: HttpStatus.UNAUTHORIZED,
-                errors: [{
-                    code: 'INVALID_CREDENTIALS',
-                    message: 'Invalid email or password'
-                }]
-            };
+            throw new Error('Invalid username or password');
         }
 
-        const userInfo: UserInfo = {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            roles: user.roles.map(role => ({ id: role.id, name: role.name })),
-            createdAt: user.createdAt,
-            updatedAt: user.updatedAt
-        };
+        const userInfo = this.toUserInfo(user);
 
         const tokens = await this.getTokens(user.id, user.email, userInfo);
         await this.updateRtHash(user.id, tokens.refreshToken);
 
-        return {
-            success: true,
-            statusCode: 200,
-            data: {
-                ...userInfo,
-                accessToken: tokens.accessToken,
-                refreshToken: tokens.refreshToken
-            }
-        };
+        return { ...userInfo, ...tokens };
     }
 
-    public async registerLocal(dto: { name: string, email: string, password: string }): Promise<UserInfo> {
+
+    public async getCurrentUser(userId: number): Promise<IUserInfo> {
+        const user = await this.userService.getOneUser(userId);
+        if (!user) {
+            throw new Error('Invalid username or password');
+        }
+        return this.toUserInfo(user);
+    }
+
+    public async registerLocal(dto: { username: string, email: string, password: string }): Promise<IUserInfo> {
         const existingUserByEmail = await this.userService.getOneUserByEmail(dto.email);
         if (existingUserByEmail) {
             throw new Error('Email already exists');
         }
 
-        const existingUserByName = await this.userService.getOneUserByName(dto.name);
-        if (existingUserByName) {
+        const existingUserByUsername = await this.userService.getOneUserByUsername(dto.username);
+        if (existingUserByUsername) {
             throw new Error('Username already exists');
         }
 
         try {
-            const user = await this.userService.createUser(dto);
-            const userInfo: UserInfo = {
+            const user = await this.userService.createUser({
+                email: dto.email,
+                username: dto.username,
+                password: await this.hashData(dto.password)
+            });
+            const userInfo: IUserInfo = {
                 id: user.id,
                 email: user.email,
-                name: user.name,
+                username: user.username,
                 roles: [],
                 createdAt: user.createdAt,
                 updatedAt: user.updatedAt
@@ -94,7 +79,7 @@ export class AuthService {
     }
 
     public async logout(userId: number) {
-        return this.userService.removeRt(userId);
+        return this.userService.removeUserRt(userId);
     }
 
     // public async refreshTokens(userId: number, rt: string) {
@@ -113,7 +98,7 @@ export class AuthService {
         await this.userService.updateUserRt({ id, hashedRT });
     }
 
-    public async getTokens(userId: number, email: string, user: UserInfo) {
+    public async getTokens(userId: number, email: string, user: IUserInfo) {
         const [accessToken, refreshToken] = await Promise.all([
             this.jwtService.signAsync(
                 {
@@ -147,5 +132,16 @@ export class AuthService {
 
     private async hashData(data: string) {
         return bcrypt.hash(data, 10);
+    }
+
+    private toUserInfo(user: UserEntity): IUserInfo {
+        return {
+            id: user.id,
+            email: user.email,
+            username: user.username,
+            roles: user.roles?.map(role => ({ id: role.id, name: role.name })) ?? [],
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt
+        };
     }
 }

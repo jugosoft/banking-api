@@ -32,7 +32,7 @@ export class UserEntity {
     roles: RoleEntity[];
 
     @Column({ unique: true })
-    name: string;
+    username: string;
 
     @Column({ select: false })
     password: string;

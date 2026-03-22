@@ -1,4 +1,4 @@
-import { IApiResponse, UserInfo } from '@common/types';
+import { IApiResponse, IUserInfo } from '@common/types';
 
-export interface IGetCurrentUserResponse extends IApiResponse<UserInfo> {
+export interface IGetCurrentUserResponse extends IApiResponse<IUserInfo> {
 }

@@ -2,7 +2,7 @@ import { IsNotEmpty, IsEmail, Length } from 'class-validator';
 
 export class AuthRegisterInput {
     @IsNotEmpty()
-    name: string;
+    username: string;
 
     @IsNotEmpty()
     @IsEmail()
