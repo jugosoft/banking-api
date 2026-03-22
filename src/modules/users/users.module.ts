@@ -19,4 +19,4 @@ import { UserEntity } from '@entities';
         UserService
     ]
 })
-export class UsersModule { }
+export class UserModule { }

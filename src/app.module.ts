@@ -4,6 +4,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { AuthModule } from './modules/auth/auth.module';
 import { AppDataSource } from './ormconfig';
+import { DepositModule } from '@modules/deposit/deposit.module';
+import { UserModule } from '@modules/users/users.module';
 
 @Module({
     imports: [
@@ -12,7 +14,9 @@ import { AppDataSource } from './ormconfig';
             envFilePath: '.env'
         }),
         TypeOrmModule.forRoot(AppDataSource.options),
-        AuthModule
+        AuthModule,
+        UserModule,
+        DepositModule
     ],
 
 })

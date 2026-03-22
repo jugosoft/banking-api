@@ -4,7 +4,7 @@ import { Response } from 'express';
 import { GetCurrentUserId, GetCurrentUser, CustomValidationPipe, IApiResponse, IUserInfo } from 'src/common';
 import { AuthRegisterInput } from '../inputs/auth-register.input';
 import { AuthService } from '../services/auth.service';
-import { AtGuard, RtGuard } from '@guards';
+import { AtGuard, RtGuard } from '@common/guards';
 import { IGetCurrentUserResponse } from '../types/get-current-user-response.type';
 import { ILoginResponse, IRegisterResponse, TokenPair } from '../types';
 
@@ -120,9 +120,9 @@ export class AuthController {
     }
 
 
-    private setAuthCookies<T extends TokenPair>(response: Response, tokens: T) {
-        response.cookie('access_token', tokens.accessToken, { httpOnly: true, secure: true, sameSite: 'strict' });
-        response.cookie('refresh_token', tokens.refreshToken, { httpOnly: true, secure: true, sameSite: 'strict' });
+    private setAuthCookies<T extends TokenPair>(response: Response, tokens: T): void {
+        response.cookie('access_token', tokens.accessToken, { httpOnly: true, secure: true, sameSite: 'none' });
+        response.cookie('refresh_token', tokens.refreshToken, { httpOnly: true, secure: true, sameSite: 'none' });
     }
 
     private clearAuthCookies(response: Response) {
@@ -141,7 +141,7 @@ export class AuthController {
     // ): Promise<ILoginResponse> {
     //     const tokens = await this.authService.refreshTokens(userId, refreshToken);
     //     response.cookie('access_token', tokens.accessToken, { httpOnly: true });
-    //     response.cookie('refresh_token', tokensfce3vhjk,.refreshToken, { httpOnly: true });
+    //     response.cookie('refresh_token', tokens.refreshToken, { httpOnly: true });
     //     return {
     //         success: true,
     //         data: {

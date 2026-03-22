@@ -7,13 +7,13 @@ import { UserEntity } from 'src/entities/user.entity';
 import { AuthController } from './controllers/auth.controller';
 import { AuthService } from './services/auth.service';
 import { AtStrategy, RtStrategy } from './strategies';
-import { UsersModule } from '../users/users.module';
+import { UserModule } from '../users/users.module';
 import { UserService } from '@modules/users/services/user/user.service';
 
 
 @Module({
     imports: [
-        UsersModule,
+        UserModule,
         PassportModule,
         JwtModule.register({}),
         TypeOrmModule.forFeature([UserEntity])

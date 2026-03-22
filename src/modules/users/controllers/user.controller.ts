@@ -5,7 +5,7 @@ import { CreateUserInput } from '../inputs/create-user.input';
 import { UpdateUserInput } from '../inputs/update-user.input';
 import { UserService } from '../services/user/user.service';
 import { GetCurrentUserId } from 'src/common';
-import { AtGuard } from '@guards';
+import { AtGuard } from '@common/guards';
 
 @Controller('users')
 export class UserController {

@@ -1,3 +1,3 @@
-import { AuthGuard } from '@nestjs/passport';
+import { RtGuard } from '@common/guards';
 
-export class RtGuard extends AuthGuard('jwt-refresh') { }
+export default RtGuard;
