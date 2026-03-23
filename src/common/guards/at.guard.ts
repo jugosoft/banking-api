@@ -2,14 +2,13 @@ import { Injectable, UnauthorizedException, ExecutionContext } from '@nestjs/com
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
 import { IApiResponse } from '@common/types';
-import { IUserInfo } from '@common/types/user';
 
 @Injectable()
 export class AtGuard extends AuthGuard('jwt') {
     public getRequest(context: ExecutionContext): Request {
         const request = context.switchToHttp().getRequest();
-        const token = request.cookies?.access_token;
 
+        const token = request.cookies?.access_token;
         if (!token) {
             throw new UnauthorizedException({
                 success: false,
@@ -23,11 +22,10 @@ export class AtGuard extends AuthGuard('jwt') {
             } as IApiResponse);
         }
 
-        request.headers.authorization = `Bearer ${token}`;
-        return request;
+        return request; // ← больше не модифицируем headers
     }
 
-    public handleRequest<IUserInfo>(err: Error | null, user: IUserInfo, info: Error): IUserInfo {
+    public handleRequest<IUserInfo>(err: Error | null, user: IUserInfo): IUserInfo {
         if (err || !user) {
             throw err || new UnauthorizedException({
                 success: false,

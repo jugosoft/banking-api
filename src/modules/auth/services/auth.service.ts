@@ -103,23 +103,21 @@ export class AuthService {
             this.jwtService.signAsync(
                 {
                     sub: userId,
-                    email,
-                    user
+                    username: user.username,
                 },
                 {
                     secret: this.configService.get('AT_SECRET'),
-                    expiresIn: 60 * 15,
+                    expiresIn: '1d',
                 },
             ),
             this.jwtService.signAsync(
                 {
                     sub: userId,
-                    email,
-                    user
+                    username: user.username,
                 },
                 {
                     secret: this.configService.get('RT_SECRET'),
-                    expiresIn: 60 * 60 * 24 * 7,
+                    expiresIn: '7d',
                 },
             ),
         ]);

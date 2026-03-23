@@ -121,8 +121,10 @@ export class AuthController {
 
 
     private setAuthCookies<T extends TokenPair>(response: Response, tokens: T): void {
-        response.cookie('access_token', tokens.accessToken, { httpOnly: true, secure: true, sameSite: 'none' });
-        response.cookie('refresh_token', tokens.refreshToken, { httpOnly: true, secure: true, sameSite: 'none' });
+        const secure = process.env.NODE_ENV === 'production';
+        const maxAge = 24 * 60 * 60 * 1000;
+        response.cookie('access_token', tokens.accessToken, { httpOnly: true, secure, sameSite: 'lax', maxAge });
+        response.cookie('refresh_token', tokens.refreshToken, { httpOnly: true, secure, sameSite: 'lax', maxAge });
     }
 
     private clearAuthCookies(response: Response) {

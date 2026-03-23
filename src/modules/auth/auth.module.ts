@@ -9,13 +9,20 @@ import { AuthService } from './services/auth.service';
 import { AtStrategy, RtStrategy } from './strategies';
 import { UserModule } from '../users/users.module';
 import { UserService } from '@modules/users/services/user/user.service';
+import { ConfigService } from '@nestjs/config';
 
 
 @Module({
     imports: [
         UserModule,
         PassportModule,
-        JwtModule.register({}),
+        JwtModule.registerAsync({
+            useFactory: (configService: ConfigService) => ({
+                secret: configService.get('AT_SECRET'),
+                signOptions: { expiresIn: '1d' },
+            }),
+            inject: [ConfigService],
+        }),
         TypeOrmModule.forFeature([UserEntity])
     ],
     providers: [
