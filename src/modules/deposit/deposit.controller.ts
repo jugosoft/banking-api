@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Post, Param, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Param, UseGuards, Query, HttpStatus } from '@nestjs/common';
 import { DepositInput } from './inputs/deposit.input';
 import { DepositService } from './services/deposit.service';
 import { Deposit } from 'src/entities/deposit.entity';
 import { AtGuard } from '@common/guards';
+import { IApiResponse, IPaginatedResponse } from '@common/types';
 
 @Controller('deposit')
 export class DepositController {
@@ -11,8 +12,16 @@ export class DepositController {
 
     @UseGuards(AtGuard)
     @Get('list')
-    public async getDepositList(): Promise<Deposit[]> {
-        return await this.depositService.getDepositList();
+    public async getDepositList(
+        // @Query('page') page: number = 1,
+        // @Query('size') size: number = 10
+    ): Promise<IApiResponse<IPaginatedResponse<Deposit>>> {
+        const data = await this.depositService.getPaginatedDepositList();
+        return {
+            statusCode: HttpStatus.OK,
+            success: true,
+            data
+        }
     }
 
     @UseGuards(AtGuard)

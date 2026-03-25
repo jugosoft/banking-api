@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, Repository, FindOptionsWhere } from 'typeorm';
 import { Deposit } from '@entities';
 import { ErrorCode } from '@constants';
+import { IPaginatedResponse } from '@common/types';
 
 @Injectable()
 export class DepositService {
@@ -11,12 +12,28 @@ export class DepositService {
         this.depositRepository = dataSource.getRepository(Deposit);
     }
 
-    async getDepositList(): Promise<any> {
-        const deposits = await this.depositRepository.find({
-            where: { archived: false },
+    async getPaginatedDepositList(page: number = 1, size: number = 10): Promise<IPaginatedResponse<Deposit>> {
+        const skip = (page - 1) * size;
+        const take = size;
+
+        const where: FindOptionsWhere<Deposit> = { archived: false };
+
+        const [items, total] = await this.depositRepository.findAndCount({
+            where,
+            skip,
+            take,
+            order: { id: 'DESC' }
         });
 
-        return { deposits };
+        const hasMore = skip + items.length < total;
+
+        return {
+            items,
+            total,
+            page,
+            size,
+            hasMore
+        };
     }
 
     async getDeposit(id: string): Promise<any> {
