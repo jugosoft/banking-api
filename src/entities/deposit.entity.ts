@@ -9,7 +9,7 @@ export class Deposit {
     @Column()
     amount: number;
 
-    @Column()
+    @Column({ type: 'decimal', precision: 10, scale: 4 })
     rate: number;
 
     @Column()

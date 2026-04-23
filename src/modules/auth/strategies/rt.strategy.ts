@@ -7,13 +7,15 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class RtStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
-    constructor(private configService: ConfigService) {
+    constructor(
+        private readonly configService: ConfigService
+    ) {
         super({
             jwtFromRequest: ExtractJwt.fromExtractors([
-                (request) => request?.cookies?.refresh_token, // ← Правильная кука!
+                (request) => request?.cookies?.refresh_token, 
             ]),
             ignoreExpiration: false,
-            secretOrKey: configService.get('RT_SECRET'), // ← секрет от refresh
+            secretOrKey: configService.get('RT_SECRET'),
         });
     }
 

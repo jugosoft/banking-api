@@ -1,73 +1,50 @@
-import { Injectable } from '@nestjs/common';
-import { DataSource, Repository, FindOptionsWhere } from 'typeorm';
-import { Deposit } from '@entities';
-import { ErrorCode } from '@constants';
-import { IPaginatedResponse } from '@common/types';
+import { Injectable, NotFoundException, ConflictException, InternalServerErrorException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Deposit } from 'src/entities/deposit.entity';
+import { DepositInput } from '../inputs/deposit.input';
 
 @Injectable()
 export class DepositService {
-    private readonly depositRepository: Repository<Deposit>;
+    public constructor(
+        @InjectRepository(Deposit)
+        private readonly depositRepository: Repository<Deposit>,
+    ) { }
 
-    constructor(private dataSource: DataSource) {
-        this.depositRepository = dataSource.getRepository(Deposit);
+    public async getPaginatedDepositList(): Promise<Deposit[]> {
+        return await this.depositRepository.find();
     }
 
-    async getPaginatedDepositList(page: number = 1, size: number = 10): Promise<IPaginatedResponse<Deposit>> {
-        const skip = (page - 1) * size;
-        const take = size;
-
-        const where: FindOptionsWhere<Deposit> = { archived: false };
-
-        const [items, total] = await this.depositRepository.findAndCount({
-            where,
-            skip,
-            take,
-            order: { id: 'DESC' }
-        });
-
-        const hasMore = skip + items.length < total;
-
-        return {
-            items,
-            total,
-            page,
-            size,
-            hasMore
-        };
-    }
-
-    async getDeposit(id: string): Promise<any> {
-        const deposit = await this.depositRepository.findOne({
-            where: { id: parseInt(id) },
-        });
+    public async getDeposit(id: number): Promise<Deposit> {
+        const deposit = await this.depositRepository.findOne({ where: { id } });
 
         if (!deposit) {
-            return {
-                error: { code: 'NO_DEPOSIT', message: 'Deposit not found' },
-            };
+            throw new NotFoundException('Deposit not found');
         }
 
-        return { deposit };
+        return deposit;
     }
 
-    async saveDeposit(deposit: any): Promise<any> {
+    public async saveDeposit(depositInput: DepositInput): Promise<Deposit> {
         try {
-            if (deposit.id) {
-                // Обновление существующего депозита
-                await this.depositRepository.update(deposit.id, deposit);
-            } else {
-                // Создание нового депозита
-                const newDeposit = this.depositRepository.create(deposit);
-                await this.depositRepository.save(newDeposit);
+            // Проверяем, существует ли уже депозит с таким ID
+            if (depositInput.id) {
+                const existingDeposit = await this.depositRepository.findOne({ where: { id: depositInput.id } });
+
+                if (existingDeposit) {
+                    // Обновляем существующий депозит
+                    return await this.depositRepository.save({
+                        ...existingDeposit,
+                        ...depositInput
+                    });
+                }
             }
-            return true;
+
+            const newDeposit = this.depositRepository.create(depositInput);
+            return await this.depositRepository.save(newDeposit);
         } catch (error) {
-            return {
-                error: {
-                    code: ErrorCode.DEPOSIT_SAVE_ERROR,
-                    message: 'Failed to save deposit',
-                },
-            };
+            throw new InternalServerErrorException('Failed to save deposit: ' + error.message);
         }
     }
 }
+

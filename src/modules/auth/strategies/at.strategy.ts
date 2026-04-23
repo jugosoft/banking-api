@@ -7,7 +7,9 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AtStrategy extends PassportStrategy(Strategy, 'jwt') {
-    constructor(private configService: ConfigService) {
+    constructor(
+        private readonly configService: ConfigService
+    ) {
         super({
             jwtFromRequest: ExtractJwt.fromExtractors([
                 (request) => request?.cookies?.access_token,
