@@ -8,9 +8,8 @@ import {
     PrimaryGeneratedColumn,
     UpdateDateColumn
 } from 'typeorm';
-
 import { RoleEntity } from './role.entity';
-import { Deposit } from './deposit.entity';
+import { DepositEntity } from './deposit.entity';
 
 
 @Entity('users')
@@ -40,6 +39,6 @@ export class UserEntity {
     @Column({ nullable: true })
     hashedRT: string;
 
-    @OneToMany(() => Deposit, deposit => deposit.user)
-    deposits: Deposit[];
+    @OneToMany(() => DepositEntity, deposit => deposit.user)
+    deposits: DepositEntity[];
 }

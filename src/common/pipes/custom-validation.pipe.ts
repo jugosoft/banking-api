@@ -1,4 +1,4 @@
-import { ArgumentMetadata, BadRequestException, HttpStatus, Injectable, PipeTransform } from '@nestjs/common';
+import { ArgumentMetadata, BadRequestException, Injectable, PipeTransform } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { IApiResponse } from '@common/types';
@@ -24,7 +24,6 @@ export class CustomValidationPipe implements PipeTransform<any> {
 
             const errorResponse: IApiResponse<null> = {
                 success: false,
-                statusCode: HttpStatus.BAD_REQUEST,
                 errors: formattedErrors,
             };
 

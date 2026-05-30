@@ -1,34 +1,34 @@
-import { Bank, DepositType } from '@entities';
+import { BankEntity, DepositTypeEntity } from '@entities';
 import { Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 
 @Injectable()
 export class ReferenceService {
-    private readonly depositTypeRepository: Repository<DepositType>;
-    private readonly bankRepository: Repository<Bank>;
+    private readonly depositTypeRepository: Repository<DepositTypeEntity>;
+    private readonly bankRepository: Repository<BankEntity>;
 
     constructor(private dataSource: DataSource) {
-        this.depositTypeRepository = dataSource.getRepository(DepositType);
-        this.bankRepository = dataSource.getRepository(Bank);
+        this.depositTypeRepository = dataSource.getRepository(DepositTypeEntity);
+        this.bankRepository = dataSource.getRepository(BankEntity);
     }
 
     // CRUD для deposit_type
-    async getDepositTypes(): Promise<DepositType[]> {
+    async getDepositTypes(): Promise<DepositTypeEntity[]> {
         return await this.depositTypeRepository.find();
     }
 
-    async getDepositType(id: string): Promise<DepositType | null> {
+    async getDepositType(id: string): Promise<DepositTypeEntity | null> {
         return await this.depositTypeRepository.findOne({
             where: { id: parseInt(id) },
         });
     }
 
-    async createDepositType(body: { type: string; name: string }): Promise<DepositType> {
+    async createDepositType(body: { type: string; name: string }): Promise<DepositTypeEntity> {
         const depositType = this.depositTypeRepository.create(body);
         return await this.depositTypeRepository.save(depositType);
     }
 
-    async updateDepositType(id: string, body: { type?: string; name?: string }): Promise<DepositType | null> {
+    async updateDepositType(id: string, body: { type?: string; name?: string }): Promise<DepositTypeEntity | null> {
         const depositType = await this.depositTypeRepository.findOne({
             where: { id: parseInt(id) },
         });
@@ -47,22 +47,22 @@ export class ReferenceService {
     }
 
     // CRUD для bank
-    async getBanks(): Promise<Bank[]> {
+    async getBanks(): Promise<BankEntity[]> {
         return await this.bankRepository.find();
     }
 
-    async getBank(id: string): Promise<Bank | null> {
+    async getBank(id: string): Promise<BankEntity | null> {
         return await this.bankRepository.findOne({
             where: { id: parseInt(id) },
         });
     }
 
-    async createBank(body: { name: string; shortName: string }): Promise<Bank> {
+    async createBank(body: { name: string; shortName: string }): Promise<BankEntity> {
         const bank = this.bankRepository.create(body);
         return await this.bankRepository.save(bank);
     }
 
-    async updateBank(id: string, body: { name?: string; shortName?: string }): Promise<Bank | null> {
+    async updateBank(id: string, body: { name?: string; shortName?: string }): Promise<BankEntity | null> {
         const bank = await this.bankRepository.findOne({
             where: { id: parseInt(id) },
         });

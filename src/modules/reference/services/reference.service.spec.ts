@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ReferenceService } from './reference.service';
 import { DataSource, Repository } from 'typeorm';
-import { Bank, DepositType } from '@entities';
+import { BankEntity, DepositTypeEntity } from '@entities';
 import { getRepositoryToken } from '@nestjs/typeorm';
 
 // Mock для Repository
@@ -29,8 +29,8 @@ const mockDataSource = {
 // Устанавливаем возвращаемые значения для getRepository
 jest.mock('@nestjs/typeorm', () => ({
     getRepositoryToken: jest.fn().mockImplementation((entity) => {
-        if (entity === DepositType) return 'DepositTypeRepository';
-        if (entity === Bank) return 'BankRepository';
+        if (entity === DepositTypeEntity) return 'DepositTypeRepository';
+        if (entity === BankEntity) return 'BankRepository';
         return 'UnknownRepository';
     })
 }));
@@ -38,15 +38,15 @@ jest.mock('@nestjs/typeorm', () => ({
 describe('ReferenceService', () => {
     let service: ReferenceService;
     let dataSource: DataSource;
-    let depositTypeRepository: Repository<DepositType>;
-    let bankRepository: Repository<Bank>;
+    let depositTypeRepository: Repository<DepositTypeEntity>;
+    let bankRepository: Repository<BankEntity>;
 
     beforeEach(async () => {
         // Настраиваем mock для getRepository
         (mockDataSource.getRepository as jest.Mock)
             .mockImplementation((entity) => {
-                if (entity === DepositType) return mockDepositTypeRepository;
-                if (entity === Bank) return mockBankRepository;
+                if (entity === DepositTypeEntity) return mockDepositTypeRepository;
+                if (entity === BankEntity) return mockBankRepository;
                 return null;
             });
 
@@ -62,8 +62,8 @@ describe('ReferenceService', () => {
 
         service = module.get<ReferenceService>(ReferenceService);
         dataSource = module.get<DataSource>(DataSource);
-        depositTypeRepository = dataSource.getRepository(DepositType);
-        bankRepository = dataSource.getRepository(Bank);
+        depositTypeRepository = dataSource.getRepository(DepositTypeEntity);
+        bankRepository = dataSource.getRepository(BankEntity);
     });
 
     it('should be defined', () => {
@@ -74,9 +74,9 @@ describe('ReferenceService', () => {
         it('should call depositTypeRepository.find', async () => {
             const mockTypes = [{ id: 1, name: 'Type1' }];
             mockDepositTypeRepository.find.mockResolvedValue(mockTypes);
-            
+
             const result = await service.getDepositTypes();
-            
+
             expect(depositTypeRepository.find).toHaveBeenCalled();
             expect(result).toEqual(mockTypes);
         });
@@ -87,9 +87,9 @@ describe('ReferenceService', () => {
             const id = '1';
             const mockType = { id: 1, name: 'Type1' };
             mockDepositTypeRepository.findOne.mockResolvedValue(mockType);
-            
+
             const result = await service.getDepositType(id);
-            
+
             expect(depositTypeRepository.findOne).toHaveBeenCalledWith({ where: { id: 1 } });
             expect(result).toEqual(mockType);
         });
@@ -97,9 +97,9 @@ describe('ReferenceService', () => {
         it('should return null when deposit type not found', async () => {
             const id = '1';
             mockDepositTypeRepository.findOne.mockResolvedValue(null);
-            
+
             const result = await service.getDepositType(id);
-            
+
             expect(depositTypeRepository.findOne).toHaveBeenCalledWith({ where: { id: 1 } });
             expect(result).toBeNull();
         });
@@ -111,9 +111,9 @@ describe('ReferenceService', () => {
             const createdType = { id: 1, ...body };
             mockDepositTypeRepository.create.mockReturnValue(createdType);
             mockDepositTypeRepository.save.mockResolvedValue(createdType);
-            
+
             const result = await service.createDepositType(body);
-            
+
             expect(depositTypeRepository.create).toHaveBeenCalledWith(body);
             expect(depositTypeRepository.save).toHaveBeenCalledWith(createdType);
             expect(result).toEqual(createdType);
@@ -126,12 +126,12 @@ describe('ReferenceService', () => {
             const body = { name: 'Updated Type' };
             const existingType = { id: 1, type: 'old', name: 'Old Type' };
             const updatedType = { ...existingType, ...body };
-            
+
             mockDepositTypeRepository.findOne.mockResolvedValue(existingType);
             mockDepositTypeRepository.save.mockResolvedValue(updatedType);
-            
+
             const result = await service.updateDepositType(id, body);
-            
+
             expect(depositTypeRepository.findOne).toHaveBeenCalledWith({ where: { id: 1 } });
             expect(Object.assign).toHaveBeenCalledWith(existingType, body);
             expect(depositTypeRepository.save).toHaveBeenCalledWith(updatedType);
@@ -142,9 +142,9 @@ describe('ReferenceService', () => {
             const id = '1';
             const body = { name: 'Updated Type' };
             mockDepositTypeRepository.findOne.mockResolvedValue(null);
-            
+
             const result = await service.updateDepositType(id, body);
-            
+
             expect(depositTypeRepository.findOne).toHaveBeenCalledWith({ where: { id: 1 } });
             expect(depositTypeRepository.save).not.toHaveBeenCalled();
             expect(result).toBeNull();
@@ -155,9 +155,9 @@ describe('ReferenceService', () => {
         it('should call depositTypeRepository.delete and return true when affected', async () => {
             const id = '1';
             mockDepositTypeRepository.delete.mockResolvedValue({ affected: 1 });
-            
+
             const result = await service.deleteDepositType(id);
-            
+
             expect(depositTypeRepository.delete).toHaveBeenCalledWith(1);
             expect(result).toBe(true);
         });
@@ -165,9 +165,9 @@ describe('ReferenceService', () => {
         it('should return false when not affected', async () => {
             const id = '1';
             mockDepositTypeRepository.delete.mockResolvedValue({ affected: 0 });
-            
+
             const result = await service.deleteDepositType(id);
-            
+
             expect(depositTypeRepository.delete).toHaveBeenCalledWith(1);
             expect(result).toBe(false);
         });
@@ -177,9 +177,9 @@ describe('ReferenceService', () => {
         it('should call bankRepository.find', async () => {
             const mockBanks = [{ id: 1, name: 'Bank1', shortName: 'B1' }];
             mockBankRepository.find.mockResolvedValue(mockBanks);
-            
+
             const result = await service.getBanks();
-            
+
             expect(bankRepository.find).toHaveBeenCalled();
             expect(result).toEqual(mockBanks);
         });
@@ -190,9 +190,9 @@ describe('ReferenceService', () => {
             const id = '1';
             const mockBank = { id: 1, name: 'Bank1', shortName: 'B1' };
             mockBankRepository.findOne.mockResolvedValue(mockBank);
-            
+
             const result = await service.getBank(id);
-            
+
             expect(bankRepository.findOne).toHaveBeenCalledWith({ where: { id: 1 } });
             expect(result).toEqual(mockBank);
         });
@@ -200,9 +200,9 @@ describe('ReferenceService', () => {
         it('should return null when bank not found', async () => {
             const id = '1';
             mockBankRepository.findOne.mockResolvedValue(null);
-            
+
             const result = await service.getBank(id);
-            
+
             expect(bankRepository.findOne).toHaveBeenCalledWith({ where: { id: 1 } });
             expect(result).toBeNull();
         });
@@ -214,9 +214,9 @@ describe('ReferenceService', () => {
             const createdBank = { id: 1, ...body };
             mockBankRepository.create.mockReturnValue(createdBank);
             mockBankRepository.save.mockResolvedValue(createdBank);
-            
+
             const result = await service.createBank(body);
-            
+
             expect(bankRepository.create).toHaveBeenCalledWith(body);
             expect(bankRepository.save).toHaveBeenCalledWith(createdBank);
             expect(result).toEqual(createdBank);
@@ -229,12 +229,12 @@ describe('ReferenceService', () => {
             const body = { name: 'Updated Bank' };
             const existingBank = { id: 1, name: 'Old Bank', shortName: 'OB' };
             const updatedBank = { ...existingBank, ...body };
-            
+
             mockBankRepository.findOne.mockResolvedValue(existingBank);
             mockBankRepository.save.mockResolvedValue(updatedBank);
-            
+
             const result = await service.updateBank(id, body);
-            
+
             expect(bankRepository.findOne).toHaveBeenCalledWith({ where: { id: 1 } });
             expect(Object.assign).toHaveBeenCalledWith(existingBank, body);
             expect(bankRepository.save).toHaveBeenCalledWith(updatedBank);
@@ -245,9 +245,9 @@ describe('ReferenceService', () => {
             const id = '1';
             const body = { name: 'Updated Bank' };
             mockBankRepository.findOne.mockResolvedValue(null);
-            
+
             const result = await service.updateBank(id, body);
-            
+
             expect(bankRepository.findOne).toHaveBeenCalledWith({ where: { id: 1 } });
             expect(bankRepository.save).not.toHaveBeenCalled();
             expect(result).toBeNull();
@@ -258,9 +258,9 @@ describe('ReferenceService', () => {
         it('should call bankRepository.delete and return true when affected', async () => {
             const id = '1';
             mockBankRepository.delete.mockResolvedValue({ affected: 1 });
-            
+
             const result = await service.deleteBank(id);
-            
+
             expect(bankRepository.delete).toHaveBeenCalledWith(1);
             expect(result).toBe(true);
         });
@@ -268,9 +268,9 @@ describe('ReferenceService', () => {
         it('should return false when not affected', async () => {
             const id = '1';
             mockBankRepository.delete.mockResolvedValue({ affected: 0 });
-            
+
             const result = await service.deleteBank(id);
-            
+
             expect(bankRepository.delete).toHaveBeenCalledWith(1);
             expect(result).toBe(false);
         });

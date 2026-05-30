@@ -1,9 +1,9 @@
 import { Body, Controller, Get, Post, Param, UseGuards, Query, HttpStatus, HttpException } from '@nestjs/common';
-import { DepositInput } from './inputs/deposit.input';
 import { DepositService } from './services/deposit.service';
-import { Deposit } from 'src/entities/deposit.entity';
 import { AtGuard } from '@common/guards';
 import { IApiResponse, IPaginatedResponse } from '@common/types';
+import { DepositResponseDto } from './dto/deposit-response.dto';
+import { ISaveDepositDto } from './dto/deposit.dto';
 
 @Controller('deposit')
 export class DepositController {
@@ -15,14 +15,14 @@ export class DepositController {
     public async getDepositList(
         // @Query('page') page: number = 1,
         // @Query('size') size: number = 10
-    ): Promise<IApiResponse<IPaginatedResponse<Deposit>>> {
-        const items = await this.depositService.getPaginatedDepositList();
+    ): Promise<IApiResponse<IPaginatedResponse<DepositResponseDto>>> {
+        const deposits = await this.depositService.getPaginatedDepositList();
+        const depositDtos = deposits.map(deposit => DepositResponseDto.fromEntity(deposit));
         return {
-            statusCode: HttpStatus.OK,
             success: true,
             data: {
                 hasMore: false,
-                items,
+                items: depositDtos,
                 page: 1,
                 size: 10,
                 total: 10
@@ -34,21 +34,22 @@ export class DepositController {
     @Get(':id')
     public async getDeposit(
         @Param('id') id: number
-    ): Promise<Deposit> {
-        return await this.depositService.getDeposit(id);
+    ): Promise<DepositResponseDto> {
+        const deposit = await this.depositService.getDeposit(id);
+        return DepositResponseDto.fromEntity(deposit);
     }
 
     @UseGuards(AtGuard)
     @Post('save')
     public async saveDeposit(
-        @Body() deposit: DepositInput
-    ): Promise<IApiResponse<Deposit>> {
+        @Body() deposit: ISaveDepositDto
+    ): Promise<IApiResponse<DepositResponseDto>> {
         try {
             const newDeposit = await this.depositService.saveDeposit(deposit);
+            const depositDto = DepositResponseDto.fromEntity(newDeposit);
             return {
-                statusCode: HttpStatus.CREATED,
                 success: true,
-                data: newDeposit
+                data: depositDto
             }
         } catch (error) {
             // Обработка ошибки сохранения депозита

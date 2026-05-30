@@ -25,7 +25,6 @@ export class AuthController {
         } catch (error) {
             return {
                 success: false,
-                statusCode: HttpStatus.BAD_REQUEST,
                 errors: [{
                     code: 'LOGIN_FAIL',
                     message: 'Invalid credentials'
@@ -37,7 +36,6 @@ export class AuthController {
 
         return {
             success: true,
-            statusCode: HttpStatus.OK,
             data: {
                 ...userWithTokens
             }
@@ -57,7 +55,6 @@ export class AuthController {
         } catch (error) {
             return {
                 success: false,
-                statusCode: HttpStatus.BAD_REQUEST,
                 errors: [{
                     code: 'REGISTRATION_FAIL',
                     message: error.message
@@ -72,7 +69,6 @@ export class AuthController {
 
         return {
             success: true,
-            statusCode: HttpStatus.CREATED,
             data: {
                 ...user,
                 accessToken: tokens.accessToken,
@@ -89,7 +85,6 @@ export class AuthController {
         this.clearAuthCookies(response);
         return {
             success: true,
-            statusCode: HttpStatus.OK,
             data: 'Ну и пошёл (а) на хер! (с увожением)'
         };
     }
@@ -103,7 +98,6 @@ export class AuthController {
             user = await this.authService.getCurrentUser(userId);
         } catch (error) {
             return {
-                statusCode: HttpStatus.UNAUTHORIZED,
                 success: false,
                 errors: [{
                     code: 'UNAUTHORIZED',
@@ -114,7 +108,6 @@ export class AuthController {
 
         return {
             success: true,
-            statusCode: HttpStatus.OK,
             data: user
         };
     }

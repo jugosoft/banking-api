@@ -1,6 +1,11 @@
+// src/modules/deposit/inputs/deposit.input.ts
 import { IsNotEmpty, IsNumber, IsString, IsOptional, IsBoolean } from 'class-validator';
 
-export class DepositInput {
+export interface ISaveDepositDto {
+    deposit: DepositInput;
+}
+
+class DepositInput {
     @IsOptional()
     @IsNumber()
     id?: number;
@@ -11,11 +16,7 @@ export class DepositInput {
 
     @IsNotEmpty()
     @IsNumber()
-    rate: number;
-
-    @IsNotEmpty()
-    @IsNumber()
-    term: number;
+    percent: number; // или @IsOptional(), если может быть 0
 
     @IsNotEmpty()
     @IsString()
@@ -32,4 +33,20 @@ export class DepositInput {
     @IsOptional()
     @IsBoolean()
     archived?: boolean;
+
+    @IsNotEmpty()
+    @IsNumber()
+    bankId: number;
+
+    @IsNotEmpty()
+    @IsNumber()
+    depositTypeId: number; // из typeId
+
+    @IsOptional()
+    @IsString()
+    startDate?: string;
+
+    @IsOptional()
+    @IsString()
+    endDate?: string;
 }

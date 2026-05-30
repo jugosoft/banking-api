@@ -8,30 +8,50 @@ import {
     Param
 } from '@nestjs/common';
 
-import { DepositType, Bank } from '@entities';
+import { DepositTypeEntity, BankEntity } from '@entities';
 import { ReferenceService } from './services/reference.service';
+import { IApiResponse } from '@common/types/api-response.type';
+import { IPaginatedResponse } from '@common/types/paginated-response.type';
+import { BankResponseDto } from './dto/bank-response.dto';
+import { DepositTypeResponseDto } from './dto/deposit-type-response.dto';
 
 @Controller('reference')
 export class ReferenceController {
     constructor(private readonly referenceService: ReferenceService) { }
 
+    private createSuccessResponse<T>(data: T): IApiResponse<T> {
+        return {
+            success: true,
+            data,
+        };
+    }
+
     // CRUD для deposit_type
-    @Get('deposit-type')
-    public async getDepositTypes(): Promise<DepositType[]> {
-        return await this.referenceService.getDepositTypes();
+    @Get('deposit-types')
+    public async getDepositTypes(): Promise<IApiResponse<IPaginatedResponse<DepositTypeResponseDto>>> {
+        const depositTypes = await this.referenceService.getDepositTypes();
+        const depositTypeDtos = depositTypes.map(type => DepositTypeResponseDto.fromEntity(type));
+        const paginatedResponse: IPaginatedResponse<DepositTypeResponseDto> = {
+            items: depositTypeDtos,
+            total: depositTypeDtos.length,
+            page: 1,
+            size: depositTypeDtos.length,
+            hasMore: false,
+        };
+        return this.createSuccessResponse(paginatedResponse);
     }
 
     @Get('deposit-type/:id')
     public async getDepositType(
         @Param('id') id: string
-    ): Promise<DepositType | null> {
+    ): Promise<DepositTypeEntity | null> {
         return await this.referenceService.getDepositType(id);
     }
 
     @Post('deposit-type')
     public async createDepositType(
         @Body() body: { type: string; name: string }
-    ): Promise<DepositType> {
+    ): Promise<DepositTypeEntity> {
         return await this.referenceService.createDepositType(body);
     }
 
@@ -39,7 +59,7 @@ export class ReferenceController {
     public async updateDepositType(
         @Param('id') id: string,
         @Body() body: { type?: string; name?: string }
-    ): Promise<DepositType | null> {
+    ): Promise<DepositTypeEntity | null> {
         return await this.referenceService.updateDepositType(id, body);
     }
 
@@ -49,20 +69,29 @@ export class ReferenceController {
     }
 
     // CRUD для bank
-    @Get('bank')
-    public async getBanks(): Promise<Bank[]> {
-        return await this.referenceService.getBanks();
+    @Get('banks')
+    public async getBanks(): Promise<IApiResponse<IPaginatedResponse<BankResponseDto>>> {
+        const banks = await this.referenceService.getBanks();
+        const bankDtos = banks.map(bank => BankResponseDto.fromEntity(bank));
+        const paginatedResponse: IPaginatedResponse<BankResponseDto> = {
+            items: bankDtos,
+            total: bankDtos.length,
+            page: 1,
+            size: bankDtos.length,
+            hasMore: false,
+        };
+        return this.createSuccessResponse(paginatedResponse);
     }
 
     @Get('bank/:id')
-    public async getBank(@Param('id') id: string): Promise<Bank | null> {
+    public async getBank(@Param('id') id: string): Promise<BankEntity | null> {
         return await this.referenceService.getBank(id);
     }
 
     @Post('bank')
     public async createBank(
         @Body() body: { name: string; shortName: string }
-    ): Promise<Bank> {
+    ): Promise<BankEntity> {
         return await this.referenceService.createBank(body);
     }
 
@@ -70,7 +99,7 @@ export class ReferenceController {
     public async updateBank(
         @Param('id') id: string,
         @Body() body: { name?: string; shortName?: string }
-    ): Promise<Bank | null> {
+    ): Promise<BankEntity | null> {
         return await this.referenceService.updateBank(id, body);
     }
 

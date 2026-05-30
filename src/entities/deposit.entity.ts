@@ -1,8 +1,10 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, UpdateDateColumn, CreateDateColumn } from 'typeorm';
 import { UserEntity } from './user.entity';
+import { BankEntity } from './bank.entity';
+import { DepositTypeEntity } from './deposit-type.entity';
 
 @Entity('deposit')
-export class Deposit {
+export class DepositEntity {
     @PrimaryGeneratedColumn()
     id: number;
 
@@ -10,13 +12,10 @@ export class Deposit {
     amount: number;
 
     @Column({ type: 'decimal', precision: 10, scale: 4 })
-    rate: number;
+    percent: number;
 
-    @Column()
-    term: number;
-
-    @Column()
-    name: string;
+    @Column({ nullable: true })
+    name?: string;
 
     @Column({ nullable: true })
     description?: string;
@@ -27,7 +26,27 @@ export class Deposit {
     @Column({ nullable: true })
     userId?: number;
 
-    @ManyToOne(() => UserEntity, user => user.deposits, { onDelete: 'SET NULL' })
+    @Column({ nullable: true })
+    bankId?: number;
+
+    @Column({ nullable: true })
+    depositTypeId?: number;
+
+    @CreateDateColumn()
+    startDate: Date;
+
+    @UpdateDateColumn()
+    endDate: Date;
+
+    @ManyToOne(() => UserEntity, user => user.deposits, { onDelete: 'SET NULL', eager: true })
     @JoinColumn({ name: 'userId' })
     user?: UserEntity;
+
+    @ManyToOne(() => BankEntity, bank => bank.deposits, { onDelete: 'SET NULL', eager: true })
+    @JoinColumn({ name: 'bankId' })
+    bank?: BankEntity;
+
+    @ManyToOne(() => DepositTypeEntity, depositType => depositType.deposits, { onDelete: 'SET NULL', eager: true })
+    @JoinColumn({ name: 'depositTypeId' })
+    depositType?: DepositTypeEntity;
 }

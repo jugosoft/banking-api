@@ -1,21 +1,21 @@
 import { Injectable, NotFoundException, ConflictException, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Deposit } from 'src/entities/deposit.entity';
-import { DepositInput } from '../inputs/deposit.input';
+import { DepositEntity } from 'src/entities/deposit.entity';
+import { ISaveDepositDto } from '../dto/deposit.dto';
 
 @Injectable()
 export class DepositService {
     public constructor(
-        @InjectRepository(Deposit)
-        private readonly depositRepository: Repository<Deposit>,
+        @InjectRepository(DepositEntity)
+        private readonly depositRepository: Repository<DepositEntity>,
     ) { }
 
-    public async getPaginatedDepositList(): Promise<Deposit[]> {
+    public async getPaginatedDepositList(): Promise<DepositEntity[]> {
         return await this.depositRepository.find();
     }
 
-    public async getDeposit(id: number): Promise<Deposit> {
+    public async getDeposit(id: number): Promise<DepositEntity> {
         const deposit = await this.depositRepository.findOne({ where: { id } });
 
         if (!deposit) {
@@ -25,22 +25,24 @@ export class DepositService {
         return deposit;
     }
 
-    public async saveDeposit(depositInput: DepositInput): Promise<Deposit> {
+    public async saveDeposit({ deposit }: ISaveDepositDto): Promise<DepositEntity> {
+        console.log('Deposit to save:', deposit);
+
         try {
             // Проверяем, существует ли уже депозит с таким ID
-            if (depositInput.id) {
-                const existingDeposit = await this.depositRepository.findOne({ where: { id: depositInput.id } });
+            if (deposit.id) {
+                const existingDeposit = await this.depositRepository.findOne({ where: { id: deposit.id } });
 
                 if (existingDeposit) {
                     // Обновляем существующий депозит
                     return await this.depositRepository.save({
                         ...existingDeposit,
-                        ...depositInput
+                        ...deposit
                     });
                 }
             }
 
-            const newDeposit = this.depositRepository.create(depositInput);
+            const newDeposit = this.depositRepository.create(deposit);
             return await this.depositRepository.save(newDeposit);
         } catch (error) {
             throw new InternalServerErrorException('Failed to save deposit: ' + error.message);
