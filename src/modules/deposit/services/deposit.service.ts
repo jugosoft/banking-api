@@ -27,15 +27,16 @@ export class DepositService {
         return deposit;
     }
 
-    public async deleteDeposit(id: number): Promise<number> {
+    public async deleteDeposit(id: number, userId: number): Promise<number> {
         const deposit = await this.getDeposit(id);
+        if (deposit.userId !== userId) {
+            throw new Error('Куда полез, блять! Не твоё, вот и не трогай, гандон ебуч');
+        }
         const deletedDeposit = await this.depositRepository.remove(deposit);
-        return deletedDeposit.id;
+        return deposit.id;
     }
 
     public async saveDeposit({ deposit }: ISaveDepositDto, userId: number): Promise<DepositEntity> {
-        console.log('Deposit to save:', deposit);
-
         try {
             // Проверяем, существует ли уже депозит с таким ID
             if (deposit.id) {

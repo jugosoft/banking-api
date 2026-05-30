@@ -72,10 +72,11 @@ export class DepositController {
     @HttpCode(HttpStatus.OK)
     @Delete(':id')
     public async deleteDeposit(
-        @Param('id') id: number
+        @Param('id') id: number,
+        @GetCurrentUserId() userId: number
     ): Promise<IApiResponse<number>> {
         try {
-            const depositId = await this.depositService.deleteDeposit(id);
+            const depositId = await this.depositService.deleteDeposit(id, userId);
             return {
                 success: true,
                 data: depositId
