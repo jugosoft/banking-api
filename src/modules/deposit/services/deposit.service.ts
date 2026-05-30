@@ -11,8 +11,10 @@ export class DepositService {
         private readonly depositRepository: Repository<DepositEntity>,
     ) { }
 
-    public async getPaginatedDepositList(): Promise<DepositEntity[]> {
-        return await this.depositRepository.find();
+    public async getDepositList(): Promise<DepositEntity[]> {
+        return await this.depositRepository.find({
+            relations: ['bank', 'depositType']
+        });
     }
 
     public async getDeposit(id: number): Promise<DepositEntity> {
@@ -25,7 +27,13 @@ export class DepositService {
         return deposit;
     }
 
-    public async saveDeposit({ deposit }: ISaveDepositDto): Promise<DepositEntity> {
+    public async deleteDeposit(id: number): Promise<number> {
+        const deposit = await this.getDeposit(id);
+        const deletedDeposit = await this.depositRepository.remove(deposit);
+        return deletedDeposit.id;
+    }
+
+    public async saveDeposit({ deposit }: ISaveDepositDto, userId: number): Promise<DepositEntity> {
         console.log('Deposit to save:', deposit);
 
         try {
@@ -37,12 +45,13 @@ export class DepositService {
                     // Обновляем существующий депозит
                     return await this.depositRepository.save({
                         ...existingDeposit,
-                        ...deposit
+                        ...deposit,
+                        userId
                     });
                 }
             }
 
-            const newDeposit = this.depositRepository.create(deposit);
+            const newDeposit = this.depositRepository.create({ ...deposit, userId });
             return await this.depositRepository.save(newDeposit);
         } catch (error) {
             throw new InternalServerErrorException('Failed to save deposit: ' + error.message);

@@ -40,7 +40,7 @@ class DepositInput {
 
     @IsNotEmpty()
     @IsNumber()
-    depositTypeId: number; // из typeId
+    depositTypeId: number;
 
     @IsOptional()
     @IsString()
