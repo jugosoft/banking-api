@@ -11,10 +11,15 @@ export class DepositService {
         private readonly depositRepository: Repository<DepositEntity>,
     ) { }
 
-    public async getDepositList(): Promise<DepositEntity[]> {
-        return await this.depositRepository.find({
-            relations: ['bank', 'depositType']
+    public async getDepositList(page: number = 0, limit: number = 10, userId: number): Promise<{ items: DepositEntity[], total: number }> {
+        const skip = page * limit;
+        const [items, total] = await this.depositRepository.findAndCount({
+            relations: ['bank', 'depositType'],
+            skip,
+            take: limit,
+            where: { userId }
         });
+        return { items, total };
     }
 
     public async getDeposit(id: number): Promise<DepositEntity> {

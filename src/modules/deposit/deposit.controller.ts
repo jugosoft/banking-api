@@ -16,18 +16,19 @@ export class DepositController {
     @HttpCode(HttpStatus.OK)
     @Get('list')
     public async getDepositList(
-        // @Query('page') page: number = 1,
-        // @Query('size') size: number = 10
+        @Query('page') page: number = 0,
+        @Query('size') size: number = 10,
+        @GetCurrentUserId() userId: number
     ): Promise<IApiResponse<IPaginatedResponse<DepositListItemResponseDto>>> {
-        const deposits = await this.depositService.getDepositList();
-        const depositDtos = deposits.map(deposit => DepositListItemResponseDto.fromEntity(deposit));
+        const deposits = await this.depositService.getDepositList(page, size, userId);
+        const depositDtos = deposits.items.map(deposit => DepositListItemResponseDto.fromEntity(deposit));
         return {
             success: true,
             data: {
                 hasMore: false,
                 items: depositDtos,
-                page: 1,
-                size: 10,
+                page: page,
+                size: size,
                 total: 10
             }
         }
