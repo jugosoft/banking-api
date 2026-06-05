@@ -38,9 +38,10 @@ export class DepositController {
     @HttpCode(HttpStatus.OK)
     @Get(':id')
     public async getDeposit(
-        @Param('id') id: number
+        @Param('id') id: number,
+        @GetCurrentUserId() userId: number
     ): Promise<DepositResponseDto> {
-        const deposit = await this.depositService.getDeposit(id);
+        const deposit = await this.depositService.getDeposit(id, userId);
         return DepositResponseDto.fromEntity(deposit);
     }
 

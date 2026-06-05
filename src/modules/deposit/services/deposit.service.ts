@@ -22,18 +22,22 @@ export class DepositService {
         return { items, total };
     }
 
-    public async getDeposit(id: number): Promise<DepositEntity> {
+    public async getDeposit(id: number, userId: number): Promise<DepositEntity> {
         const deposit = await this.depositRepository.findOne({ where: { id } });
 
         if (!deposit) {
             throw new NotFoundException('Deposit not found');
         }
 
+        if (deposit.userId !== userId) {
+            throw new Error('Access denied. Deposit does not belong to user.');
+        }
+
         return deposit;
     }
 
     public async deleteDeposit(id: number, userId: number): Promise<number> {
-        const deposit = await this.getDeposit(id);
+        const deposit = await this.getDeposit(id, userId);
         if (deposit.userId !== userId) {
             throw new Error('Куда полез, блять! Не твоё, вот и не трогай, гандон ебуч');
         }
