@@ -67,5 +67,20 @@ export class DepositService {
             throw new InternalServerErrorException('Failed to save deposit: ' + error.message);
         }
     }
+
+    public async getDepositStats(userId: number): Promise<{ totalAmount: number, totalInterest: number }> {
+        // Возвращаем общую сумму и общую процентную ставку всех депозитов пользователя
+        const { totalAmount, totalInterest } = await this.depositRepository
+            .createQueryBuilder('deposit')
+            .select('SUM(deposit.amount)', 'totalAmount')
+            .addSelect('SUM(deposit.percent)', 'totalInterest')
+            .where('deposit.userId = :userId', { userId })
+            .getRawOne();
+
+        return {
+            totalAmount: totalAmount || 0,
+            totalInterest: totalInterest || 0
+        };
+    }
 }
 

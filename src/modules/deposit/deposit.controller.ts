@@ -36,6 +36,23 @@ export class DepositController {
 
     @UseGuards(AtGuard)
     @HttpCode(HttpStatus.OK)
+    @Get('stats')
+    public async getDepositStats(
+        @GetCurrentUserId() userId: number
+    ): Promise<IApiResponse<{ totalAmount: number; totalInterest: number }>> {
+        const { totalAmount, totalInterest } = await this.depositService.getDepositStats(userId);
+
+        return {
+            success: true,
+            data: {
+                totalAmount,
+                totalInterest
+            }
+        };
+    }
+
+    @UseGuards(AtGuard)
+    @HttpCode(HttpStatus.OK)
     @Get(':id')
     public async getDeposit(
         @Param('id') id: number,
