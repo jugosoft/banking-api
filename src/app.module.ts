@@ -7,6 +7,7 @@ import { AppDataSource } from './ormconfig';
 import { DepositModule } from '@modules/deposit/deposit.module';
 import { UserModule } from '@modules/users/users.module';
 import { ReferenceModule } from '@modules/reference/reference.module';
+import { StatisticsModule } from '@modules/statistics/statistics.module';
 
 @Module({
     imports: [
@@ -18,7 +19,8 @@ import { ReferenceModule } from '@modules/reference/reference.module';
         AuthModule,
         UserModule,
         DepositModule,
-        ReferenceModule
+        ReferenceModule,
+        StatisticsModule
     ],
 
 })

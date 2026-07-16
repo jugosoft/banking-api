@@ -38,7 +38,7 @@ export class DepositResponseDto {
         return new DepositResponseDto(
             deposit.id,
             deposit.amount,
-            deposit.percent,
+            Number(deposit.percent),
             deposit.startDate,
             deposit.endDate,
             // UserResponseDto.fromEntity(user),

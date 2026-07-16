@@ -33,7 +33,7 @@ export class DepositListItemResponseDto {
         return new DepositListItemResponseDto(
             deposit.id,
             deposit.amount,
-            deposit.percent,
+            Number(deposit.percent),
             deposit.startDate,
             deposit.endDate,
             BankResponseDto.fromEntity(deposit.bank),
