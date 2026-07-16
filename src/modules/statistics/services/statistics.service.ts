@@ -25,7 +25,18 @@ export class StatisticsService {
 
         // Считаем общую сумму и общую процентную ставку
         const totalAmount = deposits.reduce((sum, deposit) => sum + Number(deposit.amount), 0);
-        const totalInterest = deposits.reduce((sum, deposit) => sum + Number(deposit.percent), 0);
+        const totalInterest = deposits.length
+            ? deposits.reduce((sum, deposit) => sum + Number(deposit.percent), 0) / deposits.length
+            : null;
+
+        // Расчёт текущего дохода по вкладам (простые проценты без капитализации)
+        const currentIncome = deposits.reduce((sum, deposit) => {
+            const startDate = new Date(deposit.startDate);
+            const now = new Date();
+            const monthsPassed = (now.getFullYear() - startDate.getFullYear()) * 12 + (now.getMonth() - startDate.getMonth());
+            const income = Number(deposit.amount) * (Number(deposit.percent) / 100) / monthsPassed;
+            return sum + income;
+        }, 0);
 
         // Находим ближайший к закрытию депозит
         let nearestDepositClosingInfo: NearestDepositClosingInfo | null = null;
@@ -41,6 +52,6 @@ export class StatisticsService {
             };
         }
 
-        return StatisticsResponseDto.create(totalAmount, totalInterest, nearestDepositClosingInfo);
+        return StatisticsResponseDto.create(totalAmount, totalInterest, currentIncome, nearestDepositClosingInfo);
     }
 }

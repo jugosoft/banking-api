@@ -57,9 +57,12 @@ export class DepositController {
     public async getDeposit(
         @Param('id') id: number,
         @GetCurrentUserId() userId: number
-    ): Promise<DepositResponseDto> {
+    ): Promise<IApiResponse<DepositResponseDto>> {
         const deposit = await this.depositService.getDeposit(id, userId);
-        return DepositResponseDto.fromEntity(deposit);
+        return {
+            success: true,
+            data: DepositResponseDto.fromEntity(deposit)
+        }
     }
 
     @UseGuards(AtGuard)

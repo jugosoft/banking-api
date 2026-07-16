@@ -23,7 +23,10 @@ export class DepositService {
     }
 
     public async getDeposit(id: number, userId: number): Promise<DepositEntity> {
-        const deposit = await this.depositRepository.findOne({ where: { id } });
+        const deposit = await this.depositRepository.findOne({
+            relations: ['bank', 'depositType'],
+            where: { id }
+        });
 
         if (!deposit) {
             throw new NotFoundException('Deposit not found');
@@ -62,7 +65,8 @@ export class DepositService {
             }
 
             const newDeposit = this.depositRepository.create({ ...deposit, userId });
-            return await this.depositRepository.save(newDeposit);
+            await this.depositRepository.save(newDeposit);
+            return this.getDeposit(newDeposit.id, newDeposit.userId);
         } catch (error) {
             throw new InternalServerErrorException('Failed to save deposit: ' + error.message);
         }
