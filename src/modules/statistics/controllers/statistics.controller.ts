@@ -30,4 +30,26 @@ export class StatisticsController {
             }, HttpStatus.BAD_REQUEST);
         }
     }
+
+    @UseGuards(AtGuard)
+    @HttpCode(HttpStatus.OK)
+    @Get('invests')
+    public async getInvestStats(
+        @GetCurrentUserId() userId: number
+    ): Promise<IApiResponse<{ totalAmount: number }>> {
+        try {
+            const totalAmount = await this.statisticsService.getInvestStats(userId);
+            return {
+                success: true,
+                data: { totalAmount }
+            };
+        } catch (error) {
+            throw new HttpException({
+                error: {
+                    code: 'STATISTICS_INVESTS_ERROR',
+                    message: error.message || 'Ошибка при получении статистики инвестиций'
+                }
+            }, HttpStatus.BAD_REQUEST);
+        }
+    }
 }

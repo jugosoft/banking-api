@@ -8,6 +8,7 @@ import { DepositModule } from '@modules/deposit/deposit.module';
 import { UserModule } from '@modules/users/users.module';
 import { ReferenceModule } from '@modules/reference/reference.module';
 import { StatisticsModule } from '@modules/statistics/statistics.module';
+import { InvestModule } from '@modules/invest/invest.module';
 
 @Module({
     imports: [
@@ -20,7 +21,8 @@ import { StatisticsModule } from '@modules/statistics/statistics.module';
         UserModule,
         DepositModule,
         ReferenceModule,
-        StatisticsModule
+        StatisticsModule,
+        InvestModule
     ],
 
 })

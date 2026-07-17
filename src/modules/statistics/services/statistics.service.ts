@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { DepositEntity } from '@entities';
+import { DepositEntity, InvestEntity } from '@entities';
 import { StatisticsResponseDto, NearestDepositClosingInfo } from '../dto/statistics-response.dto';
 import { MoreThan, Equal } from 'typeorm';
 
@@ -10,6 +10,8 @@ export class StatisticsService {
     public constructor(
         @InjectRepository(DepositEntity)
         private readonly depositRepository: Repository<DepositEntity>,
+        @InjectRepository(InvestEntity)
+        private readonly investRepository: Repository<InvestEntity>,
     ) { }
 
     public async getStatistics(userId: number): Promise<StatisticsResponseDto> {
@@ -47,11 +49,23 @@ export class StatisticsService {
 
             nearestDepositClosingInfo = {
                 id: nearestDeposit.id,
-                bankName: nearestDeposit.bank?.name || '',
+                bankName: nearestDeposit.bank!.name,
                 closeDate: nearestDeposit.endDate,
             };
         }
 
         return StatisticsResponseDto.create(totalAmount, totalInterest, currentIncome, nearestDepositClosingInfo);
+    }
+
+    public async getInvestStats(userId: number): Promise<number> {
+        // Считаем общую сумму по всем инвестиционным счетам
+        const invests = await this.investRepository.find({
+            where: {
+                userId,
+                archived: Equal(false),
+            },
+        });
+
+        return invests.reduce((sum, invest) => sum + Number(invest.amount), 0);
     }
 }

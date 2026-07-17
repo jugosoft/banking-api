@@ -10,7 +10,7 @@ import {
 } from 'typeorm';
 import { RoleEntity } from './role.entity';
 import { DepositEntity } from './deposit.entity';
-
+import { InvestEntity } from './invest.entity';
 
 @Entity('users')
 export class UserEntity {
@@ -41,4 +41,7 @@ export class UserEntity {
 
     @OneToMany(() => DepositEntity, deposit => deposit.user)
     deposits: DepositEntity[];
+
+    @OneToMany(() => InvestEntity, invest => invest.user)
+    invests: InvestEntity[];
 }
