@@ -6,7 +6,6 @@ export class InvestListItemResponseDto {
     readonly id: number;
     readonly amount: number;
     readonly startDate: Date;
-    readonly endDate: Date;
     readonly bank: BankResponseDto;
     readonly depositType: DepositTypeResponseDto;
 
@@ -14,14 +13,12 @@ export class InvestListItemResponseDto {
         id: number,
         amount: number,
         startDate: Date,
-        endDate: Date,
         bank: BankResponseDto,
         depositType: DepositTypeResponseDto
     ) {
         this.id = id;
         this.amount = amount;
         this.startDate = startDate;
-        this.endDate = endDate;
         this.bank = bank;
         this.depositType = depositType;
     }
@@ -31,7 +28,6 @@ export class InvestListItemResponseDto {
             invest.id,
             invest.amount,
             invest.startDate,
-            invest.endDate,
             BankResponseDto.fromEntity(invest.bank),
             DepositTypeResponseDto.fromEntity(invest.depositType)
         );

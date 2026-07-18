@@ -32,9 +32,6 @@ export class InvestEntity {
     @CreateDateColumn()
     startDate: Date;
 
-    @UpdateDateColumn()
-    endDate: Date;
-
     @ManyToOne(() => UserEntity, user => user.invests, { onDelete: 'SET NULL', eager: true })
     @JoinColumn({ name: 'userId' })
     user?: UserEntity;

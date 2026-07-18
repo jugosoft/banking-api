@@ -36,7 +36,7 @@ export class StatisticsService {
             const startDate = new Date(deposit.startDate);
             const now = new Date();
             const monthsPassed = (now.getFullYear() - startDate.getFullYear()) * 12 + (now.getMonth() - startDate.getMonth());
-            const income = Number(deposit.amount) * (Number(deposit.percent) / 100) / monthsPassed;
+            const income = Number(deposit.amount) * ((Number(deposit.percent) / 100) / monthsPassed);
             return sum + income;
         }, 0);
 
