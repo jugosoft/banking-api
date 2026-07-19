@@ -8,12 +8,13 @@ import {
     Param
 } from '@nestjs/common';
 
-import { DepositTypeEntity, BankEntity } from '@entities';
+import { DepositTypeEntity, BankEntity, DepositGroupEntity } from '@entities';
 import { ReferenceService } from './services/reference.service';
 import { IApiResponse } from '@common/types/api-response.type';
 import { IPaginatedResponse } from '@common/types/paginated-response.type';
 import { BankResponseDto } from './dto/bank-response.dto';
 import { DepositTypeResponseDto } from './dto/deposit-type-response.dto';
+import { DepositGroupResponseDto } from './dto/deposit-group-response.dto';
 
 @Controller('reference')
 export class ReferenceController {
@@ -106,5 +107,47 @@ export class ReferenceController {
     @Delete('bank/:id')
     public async deleteBank(@Param('id') id: string): Promise<boolean> {
         return await this.referenceService.deleteBank(id);
+    }
+
+    // CRUD для deposit_group
+    @Get('deposit-groups')
+    public async getDepositGroups(): Promise<IApiResponse<IPaginatedResponse<DepositGroupResponseDto>>> {
+        const depositGroups = await this.referenceService.getDepositGroups();
+        const depositGroupDtos = depositGroups.map(group => DepositGroupResponseDto.fromEntity(group));
+        const paginatedResponse: IPaginatedResponse<DepositGroupResponseDto> = {
+            items: depositGroupDtos,
+            total: depositGroupDtos.length,
+            page: 1,
+            size: depositGroupDtos.length,
+            hasMore: false,
+        };
+        return this.createSuccessResponse(paginatedResponse);
+    }
+
+    @Get('deposit-group/:id')
+    public async getDepositGroup(
+        @Param('id') id: string
+    ): Promise<DepositGroupEntity | null> {
+        return await this.referenceService.getDepositGroup(id);
+    }
+
+    @Post('deposit-group')
+    public async createDepositGroup(
+        @Body() body: { name: string; code: string }
+    ): Promise<DepositGroupEntity> {
+        return await this.referenceService.createDepositGroup(body);
+    }
+
+    @Put('deposit-group/:id')
+    public async updateDepositGroup(
+        @Param('id') id: string,
+        @Body() body: { name?: string; code?: string }
+    ): Promise<DepositGroupEntity | null> {
+        return await this.referenceService.updateDepositGroup(id, body);
+    }
+
+    @Delete('deposit-group/:id')
+    public async deleteDepositGroup(@Param('id') id: string): Promise<boolean> {
+        return await this.referenceService.deleteDepositGroup(id);
     }
 }

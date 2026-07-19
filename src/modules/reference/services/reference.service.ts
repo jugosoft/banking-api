@@ -1,4 +1,4 @@
-import { BankEntity, DepositTypeEntity } from '@entities';
+import { BankEntity, DepositTypeEntity, DepositGroupEntity } from '@entities';
 import { Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 
@@ -6,10 +6,12 @@ import { DataSource, Repository } from 'typeorm';
 export class ReferenceService {
     private readonly depositTypeRepository: Repository<DepositTypeEntity>;
     private readonly bankRepository: Repository<BankEntity>;
+    private readonly depositGroupRepository: Repository<DepositGroupEntity>;
 
     constructor(private dataSource: DataSource) {
         this.depositTypeRepository = dataSource.getRepository(DepositTypeEntity);
         this.bankRepository = dataSource.getRepository(BankEntity);
+        this.depositGroupRepository = dataSource.getRepository(DepositGroupEntity);
     }
 
     // CRUD для deposit_type
@@ -77,6 +79,40 @@ export class ReferenceService {
 
     async deleteBank(id: string): Promise<boolean> {
         const result = await this.bankRepository.delete(parseInt(id));
+        return result.affected > 0;
+    }
+
+    // CRUD для deposit_group
+    async getDepositGroups(): Promise<DepositGroupEntity[]> {
+        return await this.depositGroupRepository.find();
+    }
+
+    async getDepositGroup(id: string): Promise<DepositGroupEntity | null> {
+        return await this.depositGroupRepository.findOne({
+            where: { id: parseInt(id) },
+        });
+    }
+
+    async createDepositGroup(body: { name: string; code: string }): Promise<DepositGroupEntity> {
+        const depositGroup = this.depositGroupRepository.create(body);
+        return await this.depositGroupRepository.save(depositGroup);
+    }
+
+    async updateDepositGroup(id: string, body: { name?: string; code?: string }): Promise<DepositGroupEntity | null> {
+        const depositGroup = await this.depositGroupRepository.findOne({
+            where: { id: parseInt(id) },
+        });
+
+        if (!depositGroup) {
+            return null;
+        }
+
+        Object.assign(depositGroup, body);
+        return await this.depositGroupRepository.save(depositGroup);
+    }
+
+    async deleteDepositGroup(id: string): Promise<boolean> {
+        const result = await this.depositGroupRepository.delete(parseInt(id));
         return result.affected > 0;
     }
 }

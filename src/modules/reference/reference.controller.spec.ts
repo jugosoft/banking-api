@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ReferenceController } from './reference.controller';
 import { ReferenceService } from './services/reference.service';
-import { BankEntity, DepositTypeEntity } from '@entities';
+import { BankEntity, DepositTypeEntity, DepositGroupEntity } from '@entities';
 
 // Mock для ReferenceService
 const mockReferenceService = {
@@ -14,7 +14,12 @@ const mockReferenceService = {
     getBank: jest.fn(),
     createBank: jest.fn(),
     updateBank: jest.fn(),
-    deleteBank: jest.fn()
+    deleteBank: jest.fn(),
+    getDepositGroups: jest.fn(),
+    getDepositGroup: jest.fn(),
+    createDepositGroup: jest.fn(),
+    updateDepositGroup: jest.fn(),
+    deleteDepositGroup: jest.fn()
 };
 
 describe('ReferenceController', () => {
@@ -164,6 +169,70 @@ describe('ReferenceController', () => {
             const result = await controller.deleteBank(id);
 
             expect(service.deleteBank).toHaveBeenCalledWith(id);
+            expect(result).toBe(true);
+        });
+    });
+
+    describe('getDepositGroups', () => {
+        it('should call referenceService.getDepositGroups', async () => {
+            const mockGroups = [{ id: 1, name: 'Group1', code: 'G1' }];
+            mockReferenceService.getDepositGroups.mockResolvedValue(mockGroups);
+
+            const result = await controller.getDepositGroups();
+
+            expect(service.getDepositGroups).toHaveBeenCalled();
+            expect(result).toEqual(mockGroups);
+        });
+    });
+
+    describe('getDepositGroup', () => {
+        it('should call referenceService.getDepositGroup with id', async () => {
+            const id = '1';
+            const mockGroup = { id: 1, name: 'Group1', code: 'G1' };
+            mockReferenceService.getDepositGroup.mockResolvedValue(mockGroup);
+
+            const result = await controller.getDepositGroup(id);
+
+            expect(service.getDepositGroup).toHaveBeenCalledWith(id);
+            expect(result).toEqual(mockGroup);
+        });
+    });
+
+    describe('createDepositGroup', () => {
+        it('should call referenceService.createDepositGroup with body', async () => {
+            const body = { name: 'New Group', code: 'NG' };
+            const mockGroup = { id: 1, ...body };
+            mockReferenceService.createDepositGroup.mockResolvedValue(mockGroup);
+
+            const result = await controller.createDepositGroup(body);
+
+            expect(service.createDepositGroup).toHaveBeenCalledWith(body);
+            expect(result).toEqual(mockGroup);
+        });
+    });
+
+    describe('updateDepositGroup', () => {
+        it('should call referenceService.updateDepositGroup with id and body', async () => {
+            const id = '1';
+            const body = { name: 'Updated Group' };
+            const mockGroup = { id: 1, name: 'Updated Group', code: 'G1' };
+            mockReferenceService.updateDepositGroup.mockResolvedValue(mockGroup);
+
+            const result = await controller.updateDepositGroup(id, body);
+
+            expect(service.updateDepositGroup).toHaveBeenCalledWith(id, body);
+            expect(result).toEqual(mockGroup);
+        });
+    });
+
+    describe('deleteDepositGroup', () => {
+        it('should call referenceService.deleteDepositGroup with id', async () => {
+            const id = '1';
+            mockReferenceService.deleteDepositGroup.mockResolvedValue(true);
+
+            const result = await controller.deleteDepositGroup(id);
+
+            expect(service.deleteDepositGroup).toHaveBeenCalledWith(id);
             expect(result).toBe(true);
         });
     });
