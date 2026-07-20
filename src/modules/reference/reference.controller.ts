@@ -15,45 +15,55 @@ import { IPaginatedResponse } from '@common/types/paginated-response.type';
 import { BankResponseDto } from './dto/bank-response.dto';
 import { DepositTypeResponseDto } from './dto/deposit-type-response.dto';
 import { DepositGroupResponseDto } from './dto/deposit-group-response.dto';
+import { ICreateDepositGroupDto } from './dto/create-deposit-group.dto';
+import { DepositTypeRequestDto } from './dto';
 
 @Controller('reference')
 export class ReferenceController {
     constructor(private readonly referenceService: ReferenceService) { }
 
-    private createSuccessResponse<T>(data: T): IApiResponse<T> {
-        return {
-            success: true,
-            data,
-        };
-    }
-
     // CRUD для deposit_type
-    @Get('deposit-types')
+    @Get('deposit-type/list')
     public async getDepositTypes(): Promise<IApiResponse<IPaginatedResponse<DepositTypeResponseDto>>> {
         const depositTypes = await this.referenceService.getDepositTypes();
-        const depositTypeDtos = depositTypes.map(type => DepositTypeResponseDto.fromEntity(type));
+        const depositTypeDtos = depositTypes.map(DepositTypeResponseDto.fromEntity);
         const paginatedResponse: IPaginatedResponse<DepositTypeResponseDto> = {
             items: depositTypeDtos,
-            total: depositTypeDtos.length,
+            total: depositTypes.length,
             page: 1,
-            size: depositTypeDtos.length,
+            size: depositTypes.length,
             hasMore: false,
         };
-        return this.createSuccessResponse(paginatedResponse);
+        return {
+            success: true,
+            data: paginatedResponse
+        };
     }
 
     @Get('deposit-type/:id')
     public async getDepositType(
         @Param('id') id: string
-    ): Promise<DepositTypeEntity | null> {
-        return await this.referenceService.getDepositType(id);
+    ): Promise<IApiResponse<DepositTypeResponseDto>> {
+        const depsoitType = await this.referenceService.getDepositType(+id);
+        return {
+            success: true,
+            data: DepositTypeResponseDto.fromEntity(depsoitType)
+        };
     }
 
     @Post('deposit-type')
-    public async createDepositType(
-        @Body() body: { type: string; name: string }
-    ): Promise<DepositTypeEntity> {
-        return await this.referenceService.createDepositType(body);
+    public async saveDepositType(
+        @Body() body: DepositTypeRequestDto
+    ): Promise<IApiResponse<DepositTypeResponseDto>> {
+        const depositType = await this.referenceService.createDepositType(
+            body.name,
+            body.depositGroupId,
+            body.id
+        );
+        return {
+            success: true,
+            data: DepositTypeResponseDto.fromEntity(depositType)
+        }
     }
 
     @Put('deposit-type/:id')
@@ -65,15 +75,18 @@ export class ReferenceController {
     }
 
     @Delete('deposit-type/:id')
-    public async deleteDepositType(@Param('id') id: string): Promise<boolean> {
-        return await this.referenceService.deleteDepositType(id);
+    public async deleteDepositType(@Param('id') id: string): Promise<IApiResponse<boolean>> {
+        await this.referenceService.deleteDepositType(id);
+        return {
+            success: true
+        }
     }
 
     // CRUD для bank
-    @Get('banks')
+    @Get('bank/list')
     public async getBanks(): Promise<IApiResponse<IPaginatedResponse<BankResponseDto>>> {
         const banks = await this.referenceService.getBanks();
-        const bankDtos = banks.map(bank => BankResponseDto.fromEntity(bank));
+        const bankDtos = banks.map(BankResponseDto.fromEntity);
         const paginatedResponse: IPaginatedResponse<BankResponseDto> = {
             items: bankDtos,
             total: bankDtos.length,
@@ -81,7 +94,10 @@ export class ReferenceController {
             size: bankDtos.length,
             hasMore: false,
         };
-        return this.createSuccessResponse(paginatedResponse);
+        return {
+            success: true,
+            data: paginatedResponse
+        };
     }
 
     @Get('bank/:id')
@@ -96,58 +112,59 @@ export class ReferenceController {
         return await this.referenceService.createBank(body);
     }
 
-    @Put('bank/:id')
-    public async updateBank(
-        @Param('id') id: string,
-        @Body() body: { name?: string; shortName?: string }
-    ): Promise<BankEntity | null> {
-        return await this.referenceService.updateBank(id, body);
-    }
-
     @Delete('bank/:id')
-    public async deleteBank(@Param('id') id: string): Promise<boolean> {
-        return await this.referenceService.deleteBank(id);
+    public async deleteBank(@Param('id') id: string): Promise<IApiResponse<boolean>> {
+        await this.referenceService.deleteBank(id);
+        return {
+            success: true,
+        };
     }
 
     // CRUD для deposit_group
-    @Get('deposit-groups')
+    @Get('deposit-group/list')
     public async getDepositGroups(): Promise<IApiResponse<IPaginatedResponse<DepositGroupResponseDto>>> {
         const depositGroups = await this.referenceService.getDepositGroups();
-        const depositGroupDtos = depositGroups.map(group => DepositGroupResponseDto.fromEntity(group));
+        const depositGroupDtos = depositGroups.map(DepositGroupResponseDto.fromEntity);
         const paginatedResponse: IPaginatedResponse<DepositGroupResponseDto> = {
             items: depositGroupDtos,
-            total: depositGroupDtos.length,
+            total: depositGroups.length,
             page: 1,
-            size: depositGroupDtos.length,
+            size: depositGroups.length,
             hasMore: false,
         };
-        return this.createSuccessResponse(paginatedResponse);
+        return {
+            success: true,
+            data: paginatedResponse
+        };
     }
 
     @Get('deposit-group/:id')
     public async getDepositGroup(
         @Param('id') id: string
-    ): Promise<DepositGroupEntity | null> {
-        return await this.referenceService.getDepositGroup(id);
+    ): Promise<IApiResponse<DepositGroupResponseDto>> {
+        const depositGroup = await this.referenceService.getDepositGroup(id);
+        return {
+            success: true,
+            data: DepositGroupResponseDto.fromEntity(depositGroup)
+        };
     }
 
     @Post('deposit-group')
     public async createDepositGroup(
-        @Body() body: { name: string; code: string }
-    ): Promise<DepositGroupEntity> {
-        return await this.referenceService.createDepositGroup(body);
-    }
-
-    @Put('deposit-group/:id')
-    public async updateDepositGroup(
-        @Param('id') id: string,
-        @Body() body: { name?: string; code?: string }
-    ): Promise<DepositGroupEntity | null> {
-        return await this.referenceService.updateDepositGroup(id, body);
+        @Body() body: ICreateDepositGroupDto
+    ): Promise<IApiResponse<DepositGroupResponseDto>> {
+        const depositGroup = await this.referenceService.createDepositGroup(body);
+        return {
+            success: true,
+            data: DepositGroupResponseDto.fromEntity(depositGroup),
+        }
     }
 
     @Delete('deposit-group/:id')
-    public async deleteDepositGroup(@Param('id') id: string): Promise<boolean> {
-        return await this.referenceService.deleteDepositGroup(id);
+    public async deleteDepositGroup(@Param('id') id: string): Promise<IApiResponse<boolean>> {
+        await this.referenceService.deleteDepositGroup(id);
+        return {
+            success: true,
+        }
     }
 }
