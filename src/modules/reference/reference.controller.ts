@@ -101,15 +101,23 @@ export class ReferenceController {
     }
 
     @Get('bank/:id')
-    public async getBank(@Param('id') id: string): Promise<BankEntity | null> {
-        return await this.referenceService.getBank(id);
+    public async getBank(@Param('id') id: string): Promise<IApiResponse<BankResponseDto>> {
+        const bank = await this.referenceService.getBank(id);
+        return {
+            success: true,
+            data: BankResponseDto.fromEntity(bank)
+        }
     }
 
     @Post('bank')
     public async createBank(
         @Body() body: { name: string; shortName: string }
-    ): Promise<BankEntity> {
-        return await this.referenceService.createBank(body);
+    ): Promise<IApiResponse<BankResponseDto>> {
+        const bank = await this.referenceService.createBank(body);
+        return {
+            success: true,
+            data: BankResponseDto.fromEntity(bank)
+        }
     }
 
     @Delete('bank/:id')
