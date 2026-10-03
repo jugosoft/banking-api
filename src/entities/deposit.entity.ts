@@ -23,6 +23,9 @@ export class DepositEntity {
     @Column({ default: false })
     archived: boolean;
 
+    @Column({ default: false })
+    capitalization: boolean;
+
     @Column({ nullable: true })
     userId?: number;
 

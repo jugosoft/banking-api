@@ -32,7 +32,7 @@ class DepositInput {
 
     @IsOptional()
     @IsBoolean()
-    archived?: boolean;
+    capitalization?: boolean;
 
     @IsNotEmpty()
     @IsNumber()

@@ -10,6 +10,7 @@ export class DepositResponseDto {
     readonly percent: number;
     readonly startDate: Date;
     readonly endDate: Date;
+    readonly capitalization: boolean;
     readonly user: UserResponseDto;
     readonly bank: BankResponseDto;
     readonly depositType: DepositTypeResponseDto;
@@ -20,6 +21,7 @@ export class DepositResponseDto {
         percent: number,
         startDate: Date,
         endDate: Date,
+        capitalization: boolean,
         user: UserResponseDto,
         bank: BankResponseDto,
         depositType: DepositTypeResponseDto
@@ -29,6 +31,7 @@ export class DepositResponseDto {
         this.percent = percent;
         this.startDate = startDate;
         this.endDate = endDate;
+        this.capitalization = capitalization;
         this.user = user;
         this.bank = bank;
         this.depositType = depositType;
@@ -41,6 +44,7 @@ export class DepositResponseDto {
             Number(deposit.percent),
             deposit.startDate,
             deposit.endDate,
+            deposit.capitalization,
             UserResponseDto.fromEntity(deposit.user!),
             BankResponseDto.fromEntity(deposit.bank!),
             DepositTypeResponseDto.fromEntity(deposit.depositType!)

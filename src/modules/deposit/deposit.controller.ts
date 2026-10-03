@@ -17,7 +17,7 @@ export class DepositController {
     @Get('list')
     public async getDepositList(
         @Query('page') page: number = 0,
-        @Query('size') size: number = 10,
+        @Query('size') size: number = 20,
         @GetCurrentUserId() userId: number
     ): Promise<IApiResponse<IPaginatedResponse<DepositListItemResponseDto>>> {
         const deposits = await this.depositService.getDepositList(page, size, userId);
@@ -29,7 +29,7 @@ export class DepositController {
                 items: depositDtos,
                 page: page,
                 size: size,
-                total: 10
+                total: deposits.total
             }
         }
     }

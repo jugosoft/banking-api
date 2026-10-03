@@ -35,8 +35,16 @@ export class StatisticsService {
         const currentIncome = deposits.reduce((sum, deposit) => {
             const startDate = new Date(deposit.startDate);
             const now = new Date();
-            const monthsPassed = (now.getFullYear() - startDate.getFullYear()) * 12 + (now.getMonth() - startDate.getMonth());
-            const income = Number(deposit.amount) * ((Number(deposit.percent) / 100) / monthsPassed);
+            
+            // Вычисляем количество дней с начала вклада
+            const timeDiff = now.getTime() - startDate.getTime();
+            const daysPassed = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+            
+            // Для расчета используем фактическое количество дней и 365-дневную базу
+            const income = daysPassed > 0
+                ? Number(deposit.amount) * (Number(deposit.percent) / 100) * (daysPassed / 365)
+                : 0;
+
             return sum + income;
         }, 0);
 
