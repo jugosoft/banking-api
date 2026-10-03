@@ -9,10 +9,10 @@ export class InvestSnapshotEntity {
     @Column({ type: 'decimal', precision: 15, scale: 2 })
     amount: number;
 
-    @Column({ type: 'datetime' })
+    @Column({ type: 'timestamp' })
     date: Date;
 
-    @ManyToOne(() => InvestEntity, invest => invest.snapshots, { onDelete: 'CASCADE', eager: true })
+    @ManyToOne(() => InvestEntity, invest => invest.snapshots, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'investId' })
     invest: InvestEntity;
 

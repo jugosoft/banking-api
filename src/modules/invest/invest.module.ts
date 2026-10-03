@@ -1,9 +1,8 @@
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { InvestEntity, InvestSnapshotEntity } from '@entities';
 import { InvestController } from './invest.controller';
 import { InvestService } from './services/invest.service';
-import { InvestEntity } from '@entities';
-import { InvestSnapshotEntity } from '@entities';
-import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
     imports: [TypeOrmModule.forFeature([InvestEntity, InvestSnapshotEntity])],

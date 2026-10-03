@@ -16,7 +16,7 @@ export class InvestService {
     public async getInvestList(page: number = 0, limit: number = 10, userId: number): Promise<{ items: InvestEntity[], total: number }> {
         const skip = page * limit;
         const [items, total] = await this.investRepository.findAndCount({
-            relations: ['bank', 'depositType', 'user', 'snapshots'],
+            relations: ['bank', 'depositType', 'user'],
             skip,
             take: limit,
             where: { userId }
@@ -57,26 +57,29 @@ export class InvestService {
             // Проверяем, существует ли уже инвестиция с таким ID
             if (invest.id) {
                 const existingInvest = await this.investRepository.findOne({
-                    where: { id: invest.id },
-                    relations: ['snapshots']
+                    where: { id: invest.id }
                 });
 
                 if (existingInvest) {
                     // Создаём снимок перед обновлением
-                    const snapshot = this.investSnapshotRepository.create({
-                        invest: existingInvest,
+                    await this.investSnapshotRepository.save({
                         investId: existingInvest.id,
                         amount: invest.amount,
                         date: snapshotDate
                     });
-                    await this.investSnapshotRepository.save(snapshot);
 
-                    // Обновляем существующую инвестицию
-                    return await this.investRepository.save({
-                        ...existingInvest,
-                        ...invest,
+                    // Обновляем существующую инвестицию (без relations, чтобы не ломать FK)
+                    await this.investRepository.save({
+                        id: existingInvest.id,
+                        amount: invest.amount,
+                        name: invest.name,
+                        description: invest.description,
+                        bankId: invest.bankId,
+                        depositTypeId: invest.depositTypeId,
                         userId
                     });
+
+                    return this.getInvest(existingInvest.id, userId);
                 }
             }
 
@@ -84,13 +87,11 @@ export class InvestService {
             await this.investRepository.save(newInvest);
 
             // Создаём начальный снимок для новой инвестиции
-            const snapshot = this.investSnapshotRepository.create({
-                invest: newInvest,
+            await this.investSnapshotRepository.save({
                 investId: newInvest.id,
                 amount: invest.amount,
                 date: snapshotDate
             });
-            await this.investSnapshotRepository.save(snapshot);
 
             return this.getInvest(newInvest.id, newInvest.userId);
         } catch (error) {

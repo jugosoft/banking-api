@@ -45,6 +45,6 @@ export class InvestEntity {
     @JoinColumn({ name: 'depositTypeId' })
     depositType?: DepositTypeEntity;
 
-    @OneToMany(() => InvestSnapshotEntity, snapshot => snapshot.invest, { eager: true })
+    @OneToMany(() => InvestSnapshotEntity, snapshot => snapshot.invest)
     snapshots: InvestSnapshotEntity[];
 }
