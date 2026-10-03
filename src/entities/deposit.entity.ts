@@ -21,9 +21,6 @@ export class DepositEntity {
     description?: string;
 
     @Column({ default: false })
-    archived: boolean;
-
-    @Column({ default: false })
     capitalization: boolean;
 
     @Column({ nullable: true })

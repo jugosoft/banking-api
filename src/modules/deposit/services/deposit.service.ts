@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ConflictException, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
 import { DepositEntity } from 'src/entities/deposit.entity';
 import { ISaveDepositDto } from '../dto/deposit.dto';
 
@@ -11,13 +11,32 @@ export class DepositService {
         private readonly depositRepository: Repository<DepositEntity>,
     ) { }
 
-    public async getDepositList(page: number = 0, limit: number = 10, userId: number): Promise<{ items: DepositEntity[], total: number }> {
+    public async getDepositList(
+        page: number = 0,
+        limit: number = 10,
+        userId: number,
+        bankId?: number,
+        includeHistory?: boolean
+    ): Promise<{ items: DepositEntity[], total: number }> {
         const skip = page * limit;
+        const where: any = { userId };
+
+        if (bankId !== undefined) {
+            where.bankId = bankId;
+        }
+
+        // По умолчанию показываем только актуальные вклады (текущая дата входит в интервал [startDate, endDate])
+        if (!includeHistory) {
+            const today = new Date();
+            where.startDate = LessThanOrEqual(today);
+            where.endDate = MoreThanOrEqual(today);
+        }
+
         const [items, total] = await this.depositRepository.findAndCount({
             relations: ['bank', 'depositType'],
             skip,
             take: limit,
-            where: { userId }
+            where
         });
         return { items, total };
     }

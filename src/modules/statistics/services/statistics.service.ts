@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DepositEntity, InvestEntity } from '@entities';
 import { StatisticsResponseDto, NearestDepositClosingInfo } from '../dto/statistics-response.dto';
-import { MoreThan, Equal } from 'typeorm';
+import { MoreThan, MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
 
 @Injectable()
 export class StatisticsService {
@@ -15,12 +15,13 @@ export class StatisticsService {
     ) { }
 
     public async getStatistics(userId: number): Promise<StatisticsResponseDto> {
-        // Получаем все актуальные депозиты (не архивные и дата окончания в будущем)
+        // Получаем все актуальные депозиты (текущая дата входит в интервал [startDate, endDate])
+        const today = new Date();
         const deposits = await this.depositRepository.find({
             where: {
                 userId,
-                archived: Equal(false),
-                endDate: MoreThan(new Date())
+                startDate: LessThanOrEqual(today),
+                endDate: MoreThanOrEqual(today),
             },
             relations: ['bank'],
         });

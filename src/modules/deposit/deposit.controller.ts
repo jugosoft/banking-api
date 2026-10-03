@@ -5,6 +5,7 @@ import { IApiResponse, IPaginatedResponse } from '@common/types';
 import { DepositResponseDto } from './dto/deposit-response.dto';
 import { ISaveDepositDto } from './dto/deposit.dto';
 import { DepositListItemResponseDto } from './dto/deposit-list-response.dto';
+import { GetDepositListQueryDto } from './dto/get-deposit-list-query.dto';
 import { GetCurrentUserId } from '@common/decorators';
 
 @Controller('deposit')
@@ -16,11 +17,12 @@ export class DepositController {
     @HttpCode(HttpStatus.OK)
     @Get('list')
     public async getDepositList(
+        @Query() query: GetDepositListQueryDto,
         @Query('page') page: number = 0,
         @Query('size') size: number = 20,
         @GetCurrentUserId() userId: number
     ): Promise<IApiResponse<IPaginatedResponse<DepositListItemResponseDto>>> {
-        const deposits = await this.depositService.getDepositList(page, size, userId);
+        const deposits = await this.depositService.getDepositList(page, size, userId, query.bankId, query.includeHistory);
         const depositDtos = deposits.items.map(deposit => DepositListItemResponseDto.fromEntity(deposit));
         return {
             success: true,

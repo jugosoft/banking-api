@@ -44,14 +44,39 @@ describe('DepositService', () => {
     });
 
     describe('getDepositList', () => {
-        it('should call depositRepository.find with archived: false filter', async () => {
-            const mockDeposits = [{ id: 1, archived: false }];
+        it('should call depositRepository.find with date filter for active deposits', async () => {
+            const today = new Date();
+            const mockDeposits = [{ id: 1, startDate: new Date('2024-01-01'), endDate: new Date('2025-12-31') }];
             mockDepositRepository.find.mockResolvedValue(mockDeposits);
 
-            const result = await service.getDepositList();
+            await service.getDepositList(0, 10, 1);
 
-            expect(depositRepository.find).toHaveBeenCalledWith({ where: { archived: false } });
-            expect(result).toEqual({ deposits: mockDeposits });
+            expect(depositRepository.find).toHaveBeenCalledWith({
+                relations: ['bank', 'depositType'],
+                skip: 0,
+                take: 10,
+                where: {
+                    userId: 1,
+                    startDate: expect.any(Object),
+                    endDate: expect.any(Object)
+                }
+            });
+        });
+
+        it('should call depositRepository.find without date filter when includeHistory=true', async () => {
+            const mockDeposits = [{ id: 1, startDate: new Date('2023-01-01'), endDate: new Date('2024-01-01') }];
+            mockDepositRepository.find.mockResolvedValue(mockDeposits);
+
+            await service.getDepositList(0, 10, 1, undefined, true);
+
+            expect(depositRepository.find).toHaveBeenCalledWith({
+                relations: ['bank', 'depositType'],
+                skip: 0,
+                take: 10,
+                where: {
+                    userId: 1
+                }
+            });
         });
     });
 
