@@ -11,7 +11,7 @@ export class StatisticsController {
 
     @UseGuards(AtGuard)
     @HttpCode(HttpStatus.OK)
-    @Get('deposits')
+    @Get('statistics')
     public async getStatistics(
         @GetCurrentUserId() userId: number
     ): Promise<IApiResponse<StatisticsResponseDto>> {

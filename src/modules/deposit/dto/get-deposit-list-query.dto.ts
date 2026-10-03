@@ -10,5 +10,5 @@ export class GetDepositListQueryDto {
     @IsOptional()
     @Type(() => Boolean)
     @IsBoolean()
-    includeHistory?: boolean;
+    actual?: boolean;
 }

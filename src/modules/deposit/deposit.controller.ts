@@ -22,7 +22,7 @@ export class DepositController {
         @Query('size') size: number = 20,
         @GetCurrentUserId() userId: number
     ): Promise<IApiResponse<IPaginatedResponse<DepositListItemResponseDto>>> {
-        const deposits = await this.depositService.getDepositList(page, size, userId, query.bankId, query.includeHistory);
+        const deposits = await this.depositService.getDepositList(page, size, userId, query.bankId, query.actual);
         const depositDtos = deposits.items.map(deposit => DepositListItemResponseDto.fromEntity(deposit));
         return {
             success: true,

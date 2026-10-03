@@ -45,4 +45,8 @@ class InvestInput {
     @IsOptional()
     @IsString()
     endDate?: string;
+
+    @IsOptional()
+    @IsString()
+    snapshotDate?: string;
 }

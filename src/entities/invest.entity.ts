@@ -1,7 +1,8 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, UpdateDateColumn, CreateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { UserEntity } from './user.entity';
 import { BankEntity } from './bank.entity';
 import { DepositTypeEntity } from './deposit-type.entity';
+import { InvestSnapshotEntity } from './invest-snapshot.entity';
 
 @Entity('invest')
 export class InvestEntity {
@@ -43,4 +44,7 @@ export class InvestEntity {
     @ManyToOne(() => DepositTypeEntity, depositType => depositType.invests, { onDelete: 'SET NULL', eager: true })
     @JoinColumn({ name: 'depositTypeId' })
     depositType?: DepositTypeEntity;
+
+    @OneToMany(() => InvestSnapshotEntity, snapshot => snapshot.invest, { eager: true })
+    snapshots: InvestSnapshotEntity[];
 }

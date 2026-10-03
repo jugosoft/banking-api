@@ -5,3 +5,4 @@ export * from './deposit-group.entity';
 export * from './deposit-type.entity';
 export * from './deposit.entity';
 export * from './invest.entity';
+export * from './invest-snapshot.entity';

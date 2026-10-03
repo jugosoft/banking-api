@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { DepositEntity, InvestEntity } from '@entities';
+import { DepositEntity, InvestEntity, InvestSnapshotEntity } from '@entities';
 import { StatisticsResponseDto, NearestDepositClosingInfo } from '../dto/statistics-response.dto';
-import { MoreThan, MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
+import { MoreThanOrEqual, LessThanOrEqual, In } from 'typeorm';
 
 @Injectable()
 export class StatisticsService {
@@ -12,6 +12,8 @@ export class StatisticsService {
         private readonly depositRepository: Repository<DepositEntity>,
         @InjectRepository(InvestEntity)
         private readonly investRepository: Repository<InvestEntity>,
+        @InjectRepository(InvestSnapshotEntity)
+        private readonly investSnapshotRepository: Repository<InvestSnapshotEntity>,
     ) { }
 
     public async getStatistics(userId: number): Promise<StatisticsResponseDto> {
@@ -36,11 +38,11 @@ export class StatisticsService {
         const currentIncome = deposits.reduce((sum, deposit) => {
             const startDate = new Date(deposit.startDate);
             const now = new Date();
-            
+
             // Вычисляем количество дней с начала вклада
             const timeDiff = now.getTime() - startDate.getTime();
             const daysPassed = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
-            
+
             // Для расчета используем фактическое количество дней и 365-дневную базу
             const income = daysPassed > 0
                 ? Number(deposit.amount) * (Number(deposit.percent) / 100) * (daysPassed / 365)
@@ -67,14 +69,31 @@ export class StatisticsService {
     }
 
     public async getInvestStats(userId: number): Promise<number> {
-        // Считаем общую сумму по всем инвестиционным счетам
+        // Получаем все инвестиции пользователя
         const invests = await this.investRepository.find({
-            where: {
-                userId,
-                archived: Equal(false),
-            },
+            where: { userId },
         });
 
-        return invests.reduce((sum, invest) => sum + Number(invest.amount), 0);
+        if (invests.length === 0) {
+            return 0;
+        }
+
+        // Получаем последние снимки для каждой инвестиции
+        const investIds = invests.map(invest => invest.id);
+        const snapshots = await this.investSnapshotRepository.find({
+            where: { investId: In(investIds) },
+            order: { date: 'DESC' }
+        });
+
+        // Берём последний снимок для каждой инвестиции
+        const latestSnapshots = new Map<number, number>();
+        for (const snapshot of snapshots) {
+            if (!latestSnapshots.has(snapshot.investId)) {
+                latestSnapshots.set(snapshot.investId, Number(snapshot.amount));
+            }
+        }
+
+        // Считаем общую сумму по последним снимкам
+        return Array.from(latestSnapshots.values()).reduce((sum, amount) => sum + amount, 0);
     }
 }
