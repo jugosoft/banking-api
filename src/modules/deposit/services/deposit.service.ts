@@ -25,8 +25,8 @@ export class DepositService {
             where.bankId = bankId;
         }
 
-        // По умолчанию показываем только актуальные вклады (текущая дата входит в интервал [startDate, endDate])
-        if (!includeHistory) {
+        // При actual: true показываем только актуальные вклады (текущая дата входит в интервал [startDate, endDate])
+        if (includeHistory) {
             const today = new Date();
             where.startDate = LessThanOrEqual(today);
             where.endDate = MoreThanOrEqual(today);
