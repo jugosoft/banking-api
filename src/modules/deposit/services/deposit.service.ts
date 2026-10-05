@@ -3,6 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
 import { DepositEntity } from 'src/entities/deposit.entity';
 import { ISaveDepositDto } from '../dto/deposit.dto';
+import { IDepositFilter } from '../models/deposit-filter.model';
+import { IPaging } from '../models/paging.model';
+import { SortOrder } from '../models/sort-order.model';
 
 @Injectable()
 export class DepositService {
@@ -12,21 +15,21 @@ export class DepositService {
     ) { }
 
     public async getDepositList(
-        page: number = 0,
-        limit: number = 10,
-        userId: number,
-        bankId?: number,
-        includeHistory?: boolean
-    ): Promise<{ items: DepositEntity[], total: number }> {
-        const skip = page * limit;
-        const where: any = { userId };
+        filter: IDepositFilter,
+        paging: IPaging,
+        sort?: SortOrder<DepositEntity>,
+    ): Promise<{ items: DepositEntity[]; total: number }> {
+        const skip = paging.page * paging.limit;
 
-        if (bankId !== undefined) {
-            where.bankId = bankId;
+        const where: any = {
+            userId: filter.userId,
+        };
+
+        if (filter.bankId !== undefined) {
+            where.bankId = filter.bankId;
         }
 
-        // При actual: true показываем только актуальные вклады (текущая дата входит в интервал [startDate, endDate])
-        if (includeHistory) {
+        if (filter.includeHistory) {
             const today = new Date();
             where.startDate = LessThanOrEqual(today);
             where.endDate = MoreThanOrEqual(today);
@@ -35,16 +38,18 @@ export class DepositService {
         const [items, total] = await this.depositRepository.findAndCount({
             relations: ['bank', 'depositType'],
             skip,
-            take: limit,
-            where
+            take: paging.limit,
+            where,
+            order: sort ?? { endDate: 'desc' },
         });
+
         return { items, total };
     }
 
     public async getDeposit(id: number, userId: number): Promise<DepositEntity> {
         const deposit = await this.depositRepository.findOne({
             relations: ['bank', 'depositType'],
-            where: { id }
+            where: { id },
         });
 
         if (!deposit) {
@@ -69,16 +74,14 @@ export class DepositService {
 
     public async saveDeposit({ deposit }: ISaveDepositDto, userId: number): Promise<DepositEntity> {
         try {
-            // Проверяем, существует ли уже депозит с таким ID
             if (deposit.id) {
                 const existingDeposit = await this.depositRepository.findOne({ where: { id: deposit.id } });
 
                 if (existingDeposit) {
-                    // Обновляем существующий депозит
                     return await this.depositRepository.save({
                         ...existingDeposit,
                         ...deposit,
-                        userId
+                        userId,
                     });
                 }
             }
@@ -91,8 +94,7 @@ export class DepositService {
         }
     }
 
-    public async getDepositStats(userId: number): Promise<{ totalAmount: number, totalInterest: number }> {
-        // Возвращаем общую сумму и общую процентную ставку всех депозитов пользователя
+    public async getDepositStats(userId: number): Promise<{ totalAmount: number; totalInterest: number }> {
         const { totalAmount, totalInterest } = await this.depositRepository
             .createQueryBuilder('deposit')
             .select('SUM(deposit.amount)', 'totalAmount')
@@ -102,8 +104,7 @@ export class DepositService {
 
         return {
             totalAmount: totalAmount || 0,
-            totalInterest: totalInterest || 0
+            totalInterest: totalInterest || 0,
         };
     }
 }
-

@@ -2,10 +2,14 @@ import { Body, Controller, Get, Post, Param, UseGuards, Query, HttpStatus, HttpE
 import { DepositService } from './services/deposit.service';
 import { AtGuard } from '@common/guards';
 import { IApiResponse, IPaginatedResponse } from '@common/types';
+import { DepositEntity } from 'src/entities/deposit.entity';
 import { DepositResponseDto } from './dto/deposit-response.dto';
 import { ISaveDepositDto } from './dto/deposit.dto';
 import { DepositListItemResponseDto } from './dto/deposit-list-response.dto';
 import { GetDepositListQueryDto } from './dto/get-deposit-list-query.dto';
+import { IDepositFilter } from './models/deposit-filter.model';
+import { IPaging } from './models/paging.model';
+import { SortOrder } from './models/sort-order.model';
 import { GetCurrentUserId } from '@common/decorators';
 
 @Controller('deposit')
@@ -22,18 +26,33 @@ export class DepositController {
         @Query('size') size: number = 20,
         @GetCurrentUserId() userId: number
     ): Promise<IApiResponse<IPaginatedResponse<DepositListItemResponseDto>>> {
-        const deposits = await this.depositService.getDepositList(page, size, userId, query.bankId, query.actual);
+        const filter: IDepositFilter = {
+            userId,
+            bankId: query.bankId,
+            includeHistory: query.actual,
+        };
+
+        const paging: IPaging = {
+            page,
+            limit: size,
+        };
+
+        const sort: SortOrder<DepositEntity> | undefined = query.sortField
+            ? { [query.sortField]: query.sortDirection ?? 'desc' }
+            : undefined;
+
+        const deposits = await this.depositService.getDepositList(filter, paging, sort);
         const depositDtos = deposits.items.map(deposit => DepositListItemResponseDto.fromEntity(deposit));
         return {
             success: true,
             data: {
                 hasMore: false,
                 items: depositDtos,
-                page: page,
-                size: size,
-                total: deposits.total
-            }
-        }
+                page,
+                size,
+                total: deposits.total,
+            },
+        };
     }
 
     @UseGuards(AtGuard)

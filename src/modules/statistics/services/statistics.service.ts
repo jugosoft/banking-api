@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DepositEntity, InvestEntity, InvestSnapshotEntity } from '@entities';
-import { StatisticsResponseDto, NearestDepositClosingInfo } from '../dto/statistics-response.dto';
+import { StatisticsResponseDto, INearestDepositClosingInfo } from '../dto/statistics-response.dto';
 import { MoreThanOrEqual, LessThanOrEqual, In } from 'typeorm';
 
 @Injectable()
@@ -52,7 +52,7 @@ export class StatisticsService {
         }, 0);
 
         // Находим ближайший к закрытию депозит
-        let nearestDepositClosingInfo: NearestDepositClosingInfo | null = null;
+        let nearestDepositClosingInfo: INearestDepositClosingInfo | null = null;
         if (deposits.length > 0) {
             const nearestDeposit = deposits.reduce((prev, current) => {
                 return (prev.endDate < current.endDate) ? prev : current;

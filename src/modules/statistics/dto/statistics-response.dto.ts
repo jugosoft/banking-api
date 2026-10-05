@@ -2,13 +2,13 @@ export class StatisticsResponseDto {
     readonly totalAmount: number;
     readonly totalInterest: number;
     readonly currentIncome: number;
-    readonly nearestDepositClosingInfo: NearestDepositClosingInfo;
+    readonly nearestDepositClosingInfo: INearestDepositClosingInfo;
 
     private constructor(
         totalAmount: number,
         totalInterest: number,
         currentIncome: number,
-        nearestDepositClosingInfo: NearestDepositClosingInfo
+        nearestDepositClosingInfo: INearestDepositClosingInfo
     ) {
         this.totalAmount = totalAmount;
         this.totalInterest = totalInterest;
@@ -20,13 +20,13 @@ export class StatisticsResponseDto {
         totalAmount: number,
         totalInterest: number,
         currentIncome: number,
-        nearestDepositClosingInfo: NearestDepositClosingInfo
+        nearestDepositClosingInfo: INearestDepositClosingInfo
     ): StatisticsResponseDto {
         return new StatisticsResponseDto(totalAmount, totalInterest, currentIncome, nearestDepositClosingInfo);
     }
 }
 
-export interface NearestDepositClosingInfo {
+export interface INearestDepositClosingInfo {
     readonly id: number;
     readonly bankName: string;
     readonly closeDate: Date;
