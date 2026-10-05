@@ -29,7 +29,7 @@ export class InvestController {
                 items: investDtos,
                 page: page,
                 size: size,
-                total: 10
+                total: invests.total
             }
         }
     }

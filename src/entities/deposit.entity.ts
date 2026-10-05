@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, UpdateDateColumn, CreateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, CreateDateColumn, Index } from 'typeorm';
 import { UserEntity } from './user.entity';
 import { BankEntity } from './bank.entity';
 import { DepositTypeEntity } from './deposit-type.entity';
@@ -23,19 +23,23 @@ export class DepositEntity {
     @Column({ default: false })
     capitalization: boolean;
 
-    @Column({ nullable: true })
-    userId?: number;
+    @Index()
+    @Column()
+    userId: number;
 
+    @Index()
     @Column({ nullable: true })
     bankId?: number;
 
     @Column({ nullable: true })
     depositTypeId?: number;
 
+    @Index()
     @CreateDateColumn()
     startDate: Date;
 
-    @UpdateDateColumn()
+    @Index()
+    @Column({ type: 'timestamp' })
     endDate: Date;
 
     @ManyToOne(() => UserEntity, user => user.deposits, { onDelete: 'SET NULL', eager: true })

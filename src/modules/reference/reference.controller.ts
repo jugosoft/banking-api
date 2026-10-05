@@ -5,7 +5,8 @@ import {
     Post,
     Put,
     Delete,
-    Param
+    Param,
+    UseGuards
 } from '@nestjs/common';
 
 import { DepositTypeEntity, BankEntity, DepositGroupEntity } from '@entities';
@@ -17,6 +18,7 @@ import { DepositTypeResponseDto } from './dto/deposit-type-response.dto';
 import { DepositGroupResponseDto } from './dto/deposit-group-response.dto';
 import { ICreateDepositGroupDto } from './dto/create-deposit-group.dto';
 import { DepositTypeRequestDto } from './dto';
+import { AtGuard } from '@common/guards';
 
 @Controller('reference')
 export class ReferenceController {
@@ -44,13 +46,14 @@ export class ReferenceController {
     public async getDepositType(
         @Param('id') id: string
     ): Promise<IApiResponse<DepositTypeResponseDto>> {
-        const depsoitType = await this.referenceService.getDepositType(+id);
+        const depositType = await this.referenceService.getDepositType(+id);
         return {
             success: true,
-            data: DepositTypeResponseDto.fromEntity(depsoitType)
+            data: DepositTypeResponseDto.fromEntity(depositType)
         };
     }
 
+    @UseGuards(AtGuard)
     @Post('deposit-type')
     public async saveDepositType(
         @Body() body: DepositTypeRequestDto

@@ -43,9 +43,6 @@ export class InvestService {
 
     public async deleteInvest(id: number, userId: number): Promise<number> {
         const invest = await this.getInvest(id, userId);
-        if (invest.userId !== userId) {
-            throw new Error('Access denied. Cannot delete another user investment.');
-        }
         await this.investRepository.remove(invest);
         return id;
     }
@@ -61,14 +58,14 @@ export class InvestService {
                 });
 
                 if (existingInvest) {
-                    // Создаём снимок перед обновлением
+                    // Создаём снимок со СТАРЫМ значением перед обновлением
                     await this.investSnapshotRepository.save({
                         investId: existingInvest.id,
-                        amount: invest.amount,
+                        amount: existingInvest.amount,
                         date: snapshotDate
                     });
 
-                    // Обновляем существующую инвестицию (без relations, чтобы не ломать FK)
+                    // Обновляем существующую инвестицию
                     await this.investRepository.save({
                         id: existingInvest.id,
                         amount: invest.amount,

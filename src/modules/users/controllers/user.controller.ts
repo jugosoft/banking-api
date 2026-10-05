@@ -62,6 +62,7 @@ export class UserController {
         };
     }
 
+    @UseGuards(AtGuard)
     @Delete(':id')
     async removeOneUser(@Param() params): Promise<IApiResponse<number>> {
         const result = await this.userService.removeOneUser(params.id);
@@ -71,6 +72,7 @@ export class UserController {
         };
     }
 
+    @UseGuards(AtGuard)
     @Put()
     async updateUser(@Body() updateUserInput: UpdateUserInput): Promise<IApiResponse<UserResponseDto>> {
         const user = await this.userService.updateUser(updateUserInput);

@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, OneToMany, CreateDateColumn, Index } from 'typeorm';
 import { UserEntity } from './user.entity';
 import { BankEntity } from './bank.entity';
 import { DepositTypeEntity } from './deposit-type.entity';
@@ -21,9 +21,11 @@ export class InvestEntity {
     @Column({ default: false })
     archived: boolean;
 
-    @Column({ nullable: true })
-    userId?: number;
+    @Index()
+    @Column()
+    userId: number;
 
+    @Index()
     @Column({ nullable: true })
     bankId?: number;
 

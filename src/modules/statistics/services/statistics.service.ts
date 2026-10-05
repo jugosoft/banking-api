@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { LessThanOrEqual, Repository } from 'typeorm';
 import { DepositEntity, InvestEntity, InvestSnapshotEntity } from '@entities';
 import { StatisticsResponseDto, INearestDepositClosingInfo } from '../dto/statistics-response.dto';
-import { MoreThanOrEqual, LessThanOrEqual, In } from 'typeorm';
+import { MoreThanOrEqual } from 'typeorm';
 
 @Injectable()
 export class StatisticsService {
@@ -69,31 +69,14 @@ export class StatisticsService {
     }
 
     public async getInvestStats(userId: number): Promise<number> {
-        // Получаем все инвестиции пользователя
-        const invests = await this.investRepository.find({
-            where: { userId },
-        });
+        const result = await this.investRepository
+            .createQueryBuilder('invest')
+            .select('COALESCE(SUM(s.amount), 0)', 'total')
+            .leftJoin('invest.snapshots', 's')
+            .where('invest.userId = :userId', { userId })
+            .groupBy('invest.id')
+            .getRawOne();
 
-        if (invests.length === 0) {
-            return 0;
-        }
-
-        // Получаем последние снимки для каждой инвестиции
-        const investIds = invests.map(invest => invest.id);
-        const snapshots = await this.investSnapshotRepository.find({
-            where: { investId: In(investIds) },
-            order: { date: 'DESC' }
-        });
-
-        // Берём последний снимок для каждой инвестиции
-        const latestSnapshots = new Map<number, number>();
-        for (const snapshot of snapshots) {
-            if (!latestSnapshots.has(snapshot.investId)) {
-                latestSnapshots.set(snapshot.investId, Number(snapshot.amount));
-            }
-        }
-
-        // Считаем общую сумму по последним снимкам
-        return Array.from(latestSnapshots.values()).reduce((sum, amount) => sum + amount, 0);
+        return Number(result?.total) || 0;
     }
 }

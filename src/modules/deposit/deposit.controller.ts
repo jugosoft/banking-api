@@ -22,10 +22,11 @@ export class DepositController {
     @Get('list')
     public async getDepositList(
         @Query() query: GetDepositListQueryDto,
-        @Query('page') page: number = 0,
-        @Query('size') size: number = 20,
         @GetCurrentUserId() userId: number
     ): Promise<IApiResponse<IPaginatedResponse<DepositListItemResponseDto>>> {
+        const page = query.page ?? 0;
+        const size = query.size ?? 20;
+
         const filter: IDepositFilter = {
             userId,
             bankId: query.bankId,

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, InternalServerErrorException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
 import { DepositEntity } from 'src/entities/deposit.entity';
@@ -29,7 +29,9 @@ export class DepositService {
             where.bankId = filter.bankId;
         }
 
-        if (filter.includeHistory) {
+        // При includeHistory: false — только актуальные (текущая дата входит в [startDate, endDate])
+        // При includeHistory: true — все вклады без фильтрации по датам
+        if (!filter.includeHistory) {
             const today = new Date();
             where.startDate = LessThanOrEqual(today);
             where.endDate = MoreThanOrEqual(today);
@@ -57,7 +59,7 @@ export class DepositService {
         }
 
         if (deposit.userId !== userId) {
-            throw new Error('Access denied. Deposit does not belong to user.');
+            throw new ForbiddenException('Access denied. Deposit does not belong to user.');
         }
 
         return deposit;
@@ -65,11 +67,8 @@ export class DepositService {
 
     public async deleteDeposit(id: number, userId: number): Promise<number> {
         const deposit = await this.getDeposit(id, userId);
-        if (deposit.userId !== userId) {
-            throw new Error('Куда полез, блять! Не твоё, вот и не трогай, гандон ебуч');
-        }
         const deletedDeposit = await this.depositRepository.remove(deposit);
-        return deposit.id;
+        return deletedDeposit.id;
     }
 
     public async saveDeposit({ deposit }: ISaveDepositDto, userId: number): Promise<DepositEntity> {
