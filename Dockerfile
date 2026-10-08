@@ -1,12 +1,21 @@
-FROM node:14-alpine AS builder
-WORKDIR /usr/src/app
-COPY /*.json ./
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
 COPY . .
 RUN npm run build
 
-FROM node:14-alpine
-WORKDIR /usr/src/app
-# #cyka blyat' a ne dist/main, blya debil syka ebaniy potratil 2 4aca na xyi
-COPY --from=builder /usr/src/app ./
+FROM node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY package*.json ./
+# Ставим ТОЛЬКО prod-зависимости (никаких тайпскриптов и линтеров, чтобы образ весил < 200MB)
+RUN npm ci --only=production
+
+# Забираем собранный код из этапа builder
+COPY --from=builder /app/dist ./dist
+
 EXPOSE 3000
-CMD ["npm", "run", "start:prod"]
+
+CMD ["sh", "-c", "node ./node_modules/typeorm/cli.js migration:run -d dist/ormconfig.js && node dist/main.js"]
