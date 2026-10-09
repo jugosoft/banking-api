@@ -3,6 +3,7 @@ import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, 
 import { UserEntity } from '@entities';
 import { CreateUserInput } from '../inputs/create-user.input';
 import { UpdateUserInput } from '../inputs/update-user.input';
+import { InviteUserInput } from '../inputs/invite-user.input';
 import { UserService } from '../services/user/user.service';
 import { GetCurrentUserId } from 'src/common';
 import { AtGuard } from '@common/guards';
@@ -19,6 +20,21 @@ export class UserController {
     public async getProfile(@GetCurrentUserId() userId: number): Promise<IApiResponse<UserResponseDto>> {
         const user = await this.userService.getOneUser(userId);
         const userDto = UserResponseDto.fromEntity(user);
+        return {
+            success: true,
+            data: userDto
+        };
+    }
+
+    @UseGuards(AtGuard)
+    @Post('invite')
+    @HttpCode(HttpStatus.OK)
+    public async inviteUser(
+        @Body() inviteInput: InviteUserInput,
+        @GetCurrentUserId() userId: number
+    ): Promise<IApiResponse<UserResponseDto>> {
+        const invitedUser = await this.userService.inviteUser(inviteInput, userId);
+        const userDto = UserResponseDto.fromEntity(invitedUser);
         return {
             success: true,
             data: userDto

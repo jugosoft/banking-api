@@ -14,6 +14,7 @@ export class DepositResponseDto {
     readonly user: UserResponseDto;
     readonly bank: BankResponseDto;
     readonly depositType: DepositTypeResponseDto;
+    readonly groupOwner?: UserResponseDto;
 
     private constructor(
         id: number,
@@ -24,7 +25,8 @@ export class DepositResponseDto {
         capitalization: boolean,
         user: UserResponseDto,
         bank: BankResponseDto,
-        depositType: DepositTypeResponseDto
+        depositType: DepositTypeResponseDto,
+        groupOwner?: UserResponseDto
     ) {
         this.id = id;
         this.amount = amount;
@@ -35,9 +37,10 @@ export class DepositResponseDto {
         this.user = user;
         this.bank = bank;
         this.depositType = depositType;
+        this.groupOwner = groupOwner;
     }
 
-    static fromEntity(deposit: DepositEntity): DepositResponseDto {
+    static fromEntity(deposit: DepositEntity, groupOwner?: UserResponseDto): DepositResponseDto {
         return new DepositResponseDto(
             deposit.id,
             deposit.amount,
@@ -47,7 +50,8 @@ export class DepositResponseDto {
             deposit.capitalization,
             UserResponseDto.fromEntity(deposit.user!),
             BankResponseDto.fromEntity(deposit.bank!),
-            DepositTypeResponseDto.fromEntity(deposit.depositType!)
+            DepositTypeResponseDto.fromEntity(deposit.depositType!),
+            groupOwner
         );
     }
 }

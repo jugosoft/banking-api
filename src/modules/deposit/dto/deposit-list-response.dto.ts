@@ -1,5 +1,6 @@
 import { BankResponseDto } from '@modules/reference/dto/bank-response.dto';
 import { DepositTypeResponseDto } from '@modules/reference/dto/deposit-type-response.dto';
+import { UserResponseDto } from '@modules/users/dto/user-response.dto';
 import { DepositEntity } from 'src/entities/deposit.entity';
 
 export class DepositListItemResponseDto {
@@ -11,6 +12,7 @@ export class DepositListItemResponseDto {
     readonly capitalization: boolean;
     readonly bank: BankResponseDto;
     readonly depositType: DepositTypeResponseDto;
+    readonly groupOwner?: UserResponseDto;
 
     private constructor(
         id: number,
@@ -20,7 +22,8 @@ export class DepositListItemResponseDto {
         endDate: Date,
         capitalization: boolean,
         bank: BankResponseDto,
-        depositType: DepositTypeResponseDto
+        depositType: DepositTypeResponseDto,
+        groupOwner?: UserResponseDto
     ) {
         this.id = id;
         this.amount = amount;
@@ -30,9 +33,10 @@ export class DepositListItemResponseDto {
         this.capitalization = capitalization;
         this.bank = bank;
         this.depositType = depositType;
+        this.groupOwner = groupOwner;
     }
 
-    static fromEntity(deposit: DepositEntity): DepositListItemResponseDto {
+    static fromEntity(deposit: DepositEntity, groupOwner?: UserResponseDto): DepositListItemResponseDto {
         return new DepositListItemResponseDto(
             deposit.id,
             deposit.amount,
@@ -41,7 +45,8 @@ export class DepositListItemResponseDto {
             deposit.endDate,
             deposit.capitalization,
             BankResponseDto.fromEntity(deposit.bank),
-            DepositTypeResponseDto.fromEntity(deposit.depositType)
+            DepositTypeResponseDto.fromEntity(deposit.depositType),
+            groupOwner
         );
     }
 }

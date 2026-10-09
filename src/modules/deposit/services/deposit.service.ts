@@ -1,7 +1,9 @@
 import { Injectable, NotFoundException, ConflictException, InternalServerErrorException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
+import { Repository, MoreThanOrEqual, LessThanOrEqual, In } from 'typeorm';
 import { DepositEntity } from 'src/entities/deposit.entity';
+import { UserGroupEntity } from 'src/entities/deposit-user-group.entity';
+import { UserEntity } from 'src/entities/user.entity';
 import { ISaveDepositDto } from '../dto/deposit.dto';
 import { IDepositFilter } from '../models/deposit-filter.model';
 import { IPaging } from '../models/paging.model';
@@ -12,7 +14,18 @@ export class DepositService {
     public constructor(
         @InjectRepository(DepositEntity)
         private readonly depositRepository: Repository<DepositEntity>,
+        @InjectRepository(UserGroupEntity)
+        private readonly userGroupRepository: Repository<UserGroupEntity>,
+        @InjectRepository(UserEntity)
+        private readonly userRepository: Repository<UserEntity>,
     ) { }
+
+    public async getCurrentUserWithGroup(userId: number): Promise<UserEntity | null> {
+        return await this.userRepository.findOne({
+            where: { id: userId },
+            relations: ['group'],
+        });
+    }
 
     public async getDepositList(
         filter: IDepositFilter,
@@ -21,9 +34,14 @@ export class DepositService {
     ): Promise<{ items: DepositEntity[]; total: number }> {
         const skip = paging.page * paging.limit;
 
-        const where: any = {
-            userId: filter.userId,
-        };
+        const where: any = {};
+
+        // Если пользователь в группе — ищем вклады всех участников группы
+        if (filter.userIds && filter.userIds.length > 0) {
+            where.userId = In(filter.userIds);
+        } else if (filter.userId !== undefined) {
+            where.userId = filter.userId;
+        }
 
         if (filter.bankId !== undefined) {
             where.bankId = filter.bankId;
@@ -38,7 +56,7 @@ export class DepositService {
         }
 
         const [items, total] = await this.depositRepository.findAndCount({
-            relations: ['bank', 'depositType'],
+            relations: ['bank', 'depositType', 'user'],
             skip,
             take: paging.limit,
             where,
@@ -50,7 +68,7 @@ export class DepositService {
 
     public async getDeposit(id: number, userId: number): Promise<DepositEntity> {
         const deposit = await this.depositRepository.findOne({
-            relations: ['bank', 'depositType'],
+            relations: ['bank', 'depositType', 'user'],
             where: { id },
         });
 
@@ -105,5 +123,31 @@ export class DepositService {
             totalAmount: totalAmount || 0,
             totalInterest: totalInterest || 0,
         };
+    }
+
+    public async getGroupOwner(groupId: number): Promise<UserEntity | null> {
+        if (!groupId) return null;
+
+        const group = await this.userGroupRepository.findOne({
+            where: { id: groupId },
+            relations: ['users'],
+        });
+
+        if (!group || !group.ownerId) return null;
+
+        return await this.userRepository.findOne({
+            where: { id: group.ownerId },
+        });
+    }
+
+    public async getGroupMemberUserIds(groupId: number): Promise<number[]> {
+        if (!groupId) return [];
+
+        const members = await this.userRepository.find({
+            where: { groupId },
+            select: ['id'],
+        });
+
+        return members.map(m => m.id);
     }
 }

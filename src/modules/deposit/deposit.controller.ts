@@ -11,6 +11,7 @@ import { IDepositFilter } from './models/deposit-filter.model';
 import { IPaging } from './models/paging.model';
 import { SortOrder } from './models/sort-order.model';
 import { GetCurrentUserId } from '@common/decorators';
+import { UserResponseDto } from '@modules/users/dto/user-response.dto';
 
 @Controller('deposit')
 export class DepositController {
@@ -27,11 +28,31 @@ export class DepositController {
         const page = query.page ?? 0;
         const size = query.size ?? 20;
 
-        const filter: IDepositFilter = {
+        // Получаем текущего пользователя и его группу
+        const currentUser = await this.depositService.getCurrentUserWithGroup(userId);
+
+        let filter: IDepositFilter = {
             userId,
             bankId: query.bankId,
             includeHistory: query.actual,
         };
+
+        // Если пользователь в группе — загружаем вклады всех участников
+        let groupOwnerDto: UserResponseDto | undefined;
+        if (currentUser?.groupId) {
+            const memberUserIds = await this.depositService.getGroupMemberUserIds(currentUser.groupId);
+            filter = {
+                userIds: memberUserIds,
+                bankId: query.bankId,
+                includeHistory: query.actual,
+            };
+
+            // Получаем владельца группы
+            const groupOwner = await this.depositService.getGroupOwner(currentUser.groupId);
+            if (groupOwner) {
+                groupOwnerDto = UserResponseDto.fromEntity(groupOwner);
+            }
+        }
 
         const paging: IPaging = {
             page,
@@ -43,7 +64,9 @@ export class DepositController {
             : undefined;
 
         const deposits = await this.depositService.getDepositList(filter, paging, sort);
-        const depositDtos = deposits.items.map(deposit => DepositListItemResponseDto.fromEntity(deposit));
+        const depositDtos = deposits.items.map(deposit =>
+            DepositListItemResponseDto.fromEntity(deposit, groupOwnerDto)
+        );
         return {
             success: true,
             data: {
@@ -70,7 +93,7 @@ export class DepositController {
                 totalAmount,
                 totalInterest
             }
-        };
+        }
     }
 
     @UseGuards(AtGuard)
@@ -81,9 +104,22 @@ export class DepositController {
         @GetCurrentUserId() userId: number
     ): Promise<IApiResponse<DepositResponseDto>> {
         const deposit = await this.depositService.getDeposit(id, userId);
+
+        // Получаем владельца группы, если пользователь в группе
+        const currentUser = await this.depositService.getCurrentUserWithGroup(userId);
+        let groupOwnerDto: UserResponseDto | undefined;
+
+        if (currentUser?.groupId) {
+            const groupOwner = await this.depositService.getGroupOwner(currentUser.groupId);
+            if (groupOwner) {
+                groupOwnerDto = UserResponseDto.fromEntity(groupOwner);
+            }
+        }
+
+        const dto = DepositResponseDto.fromEntity(deposit, groupOwnerDto);
         return {
             success: true,
-            data: DepositResponseDto.fromEntity(deposit)
+            data: dto
         }
     }
 

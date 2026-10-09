@@ -6,11 +6,14 @@ import {
     ManyToMany,
     OneToMany,
     PrimaryGeneratedColumn,
-    UpdateDateColumn
+    UpdateDateColumn,
+    ManyToOne,
+    JoinColumn
 } from 'typeorm';
 import { RoleEntity } from './role.entity';
 import { DepositEntity } from './deposit.entity';
 import { InvestEntity } from './invest.entity';
+import { UserGroupEntity } from './deposit-user-group.entity';
 
 @Entity('users')
 export class UserEntity {
@@ -38,6 +41,22 @@ export class UserEntity {
 
     @Column({ nullable: true })
     hashedRT: string;
+
+    @Column({ nullable: true })
+    firstName: string;
+
+    @Column({ nullable: true })
+    lastName: string;
+
+    @Column({ nullable: true })
+    patronymic: string;
+
+    @Column({ nullable: true })
+    groupId: number;
+
+    @ManyToOne(() => UserGroupEntity, group => group.users, { nullable: true, onDelete: 'SET NULL' })
+    @JoinColumn({ name: 'groupId' })
+    group: UserGroupEntity;
 
     @OneToMany(() => DepositEntity, deposit => deposit.user)
     deposits: DepositEntity[];

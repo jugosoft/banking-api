@@ -1,5 +1,6 @@
 export interface IDepositFilter {
     includeHistory?: boolean;
-    userId: number;
+    userId?: number;
+    userIds?: number[];
     bankId?: number;
 }
