@@ -1,22 +1,18 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { UserEntity } from 'src/entities/user.entity';
-import { UserGroupEntity } from 'src/entities/deposit-user-group.entity';
 import { CreateUserInput } from '../../inputs/create-user.input';
 import { UpdateUserInput } from '../../inputs/update-user.input';
 import { UpdateUserRtInput } from '../../inputs/update-user-rt.input';
-import { InviteUserInput } from '../../inputs/invite-user.input';
 import { ErrorCode } from '@constants';
 
 @Injectable()
 export class UserService {
     constructor(
         @InjectRepository(UserEntity)
-        private readonly userRepository: Repository<UserEntity>,
-        @InjectRepository(UserGroupEntity)
-        private readonly userGroupRepository: Repository<UserGroupEntity>
+        private readonly userRepository: Repository<UserEntity>
     ) { }
 
     public async createUser(createUserInput: CreateUserInput): Promise<UserEntity> {
@@ -69,44 +65,5 @@ export class UserService {
 
     public async removeUserRt(userId: number): Promise<void> {
         await this.userRepository.update(userId, { hashedRT: null });
-    }
-
-    public async inviteUser(inviteInput: InviteUserInput, currentUserId: number): Promise<UserEntity> {
-        const currentUser = await this.getOneUser(currentUserId);
-        const invitedUser = await this.getOneUserByUsername(inviteInput.username);
-
-        if (!invitedUser) {
-            throw new NotFoundException('User not found');
-        }
-
-        if (invitedUser.id === currentUserId) {
-            throw new ConflictException('Cannot invite yourself');
-        }
-
-        let group = currentUser.group;
-
-        if (!group) {
-            group = this.userGroupRepository.create({
-                name: `Group ${currentUser.username}`,
-                ownerId: currentUser.id,
-            });
-            await this.userGroupRepository.save(group);
-        }
-
-        if (invitedUser.groupId && invitedUser.groupId !== group.id) {
-            throw new ConflictException('User already belongs to another group');
-        }
-
-        invitedUser.groupId = group.id;
-        await this.userRepository.save(invitedUser);
-
-        return await this.getOneUser(invitedUser.id);
-    }
-
-    public async getUserGroupMembers(groupId: number): Promise<UserEntity[]> {
-        return await this.userRepository.find({
-            where: { groupId },
-            relations: ['deposits'],
-        });
     }
 }

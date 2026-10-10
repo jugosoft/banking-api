@@ -2,30 +2,19 @@ import { Injectable, NotFoundException, ConflictException, InternalServerErrorEx
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThanOrEqual, LessThanOrEqual, In } from 'typeorm';
 import { DepositEntity } from 'src/entities/deposit.entity';
-import { UserGroupEntity } from 'src/entities/deposit-user-group.entity';
-import { UserEntity } from 'src/entities/user.entity';
 import { ISaveDepositDto } from '../dto/deposit.dto';
 import { IDepositFilter } from '../models/deposit-filter.model';
 import { IPaging } from '../models/paging.model';
 import { SortOrder } from '../models/sort-order.model';
+import { UserGroupService } from '@modules/users/services/user-group/user-group.service';
 
 @Injectable()
 export class DepositService {
     public constructor(
         @InjectRepository(DepositEntity)
         private readonly depositRepository: Repository<DepositEntity>,
-        @InjectRepository(UserGroupEntity)
-        private readonly userGroupRepository: Repository<UserGroupEntity>,
-        @InjectRepository(UserEntity)
-        private readonly userRepository: Repository<UserEntity>,
+        private readonly userGroupService: UserGroupService,
     ) { }
-
-    public async getCurrentUserWithGroup(userId: number): Promise<UserEntity | null> {
-        return await this.userRepository.findOne({
-            where: { id: userId },
-            relations: ['group'],
-        });
-    }
 
     public async getDepositList(
         filter: IDepositFilter,
@@ -125,29 +114,15 @@ export class DepositService {
         };
     }
 
-    public async getGroupOwner(groupId: number): Promise<UserEntity | null> {
-        if (!groupId) return null;
-
-        const group = await this.userGroupRepository.findOne({
-            where: { id: groupId },
-            relations: ['users'],
-        });
-
-        if (!group || !group.ownerId) return null;
-
-        return await this.userRepository.findOne({
-            where: { id: group.ownerId },
-        });
+    public async getGroupOwner(groupId: number): Promise<any | null> {
+        return await this.userGroupService.getGroupOwner(groupId);
     }
 
     public async getGroupMemberUserIds(groupId: number): Promise<number[]> {
-        if (!groupId) return [];
+        return await this.userGroupService.getGroupMemberUserIds(groupId);
+    }
 
-        const members = await this.userRepository.find({
-            where: { groupId },
-            select: ['id'],
-        });
-
-        return members.map(m => m.id);
+    public async getCurrentUserWithGroup(userId: number): Promise<any | null> {
+        return await this.userGroupService.getCurrentUserWithGroup(userId);
     }
 }

@@ -15,7 +15,7 @@ export const AppDataSource = new DataSource({
     database: process.env.TYPEORM_DATABASE,
     entities: [__dirname + '/**/entities/*{.ts,.js}'],
     logging: process.env.NODE_ENV !== 'production',
-    synchronize: false,
+    synchronize: true,
     //process.env.NODE_ENV !== 'production',
     migrationsRun: false,
     migrations: [__dirname + '/migrations/**/*{.ts,.js}'],

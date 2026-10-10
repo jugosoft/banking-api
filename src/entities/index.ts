@@ -7,3 +7,4 @@ export * from './deposit.entity';
 export * from './invest.entity';
 export * from './invest-snapshot.entity';
 export * from './deposit-user-group.entity';
+export * from './user-group-invite.entity';
